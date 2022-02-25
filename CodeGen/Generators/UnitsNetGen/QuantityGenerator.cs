@@ -85,7 +85,6 @@ using UnitsNet.Units;
 namespace UnitsNet
 {");
             Writer.WL($@"
-    /// <inheritdoc />
     /// <summary>
     ///     {_quantity.XmlDoc}
     /// </summary>");
