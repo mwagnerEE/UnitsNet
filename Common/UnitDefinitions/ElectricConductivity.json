@@ -1,0 +1,98 @@
+{
+  "Name": "ElectricConductivity",
+  "BaseUnit": "SiemensPerMeter",
+  "XmlDoc": "Electrical conductivity or specific conductance is the reciprocal of electrical resistivity, and measures a material's ability to conduct an electric current.",
+  "XmlDocRemarks": "https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity",
+  "BaseDimensions": {
+    "L": -3,
+    "M": -1,
+    "T": 3,
+    "I": 2
+  },
+  "Units": [
+    {
+      "SingularName": "SiemensPerMeter",
+      "PluralName": "SiemensPerMeter",
+      "BaseUnits": {
+        "L": "Meter",
+        "M": "Kilogram",
+        "T": "Second",
+        "I": "Ampere"
+      },
+      "FromUnitToBaseFunc": "{x}",
+      "FromBaseToUnitFunc": "{x}",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/m" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "SiemenPerInch",
+      "PluralName": "SiemensPerInch",
+      "FromUnitToBaseFunc": "{x} * 3.937007874015748e1",
+      "FromBaseToUnitFunc": "{x} / 3.937007874015748e1",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/in" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "SiemenPerFoot",
+      "PluralName": "SiemensPerFoot",
+      "FromUnitToBaseFunc": "{x} * 3.2808398950131234",
+      "FromBaseToUnitFunc": "{x} / 3.2808398950131234",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/ft" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "SiemenPerKilometer",
+      "PluralName": "SiemensPerKilometer",
+      "FromUnitToBaseFunc": "{x} * 1000",
+      "FromBaseToUnitFunc": "{x} / 1000",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/km" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "SiemenPerMile",
+      "PluralName": "SiemensPerMile",
+      "FromUnitToBaseFunc": "{x} * 1609",
+      "FromBaseToUnitFunc": "{x} / 1609",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/mi" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "SiemenPerKilofoot",
+      "PluralName": "SiemensPerKilofoot",
+      "FromUnitToBaseFunc": "{x} * 3.2808398950131234e3",
+      "FromBaseToUnitFunc": "{x} / 3.2808398950131234e3",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "S/kft" ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "Name": "ElectricLinearResistivity",
+  "BaseUnit": "OhmPerMeter",
+  "XmlDoc": "Electrical linear resistivity is a property of one dimensional conductors that represents the resistance per unit length.",
+  "XmlDocRemarks": "https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity",
+  "BaseDimensions": {
+    "L": 1,
+    "M": 1,
+    "T": -3,
+    "I": -2
+  },
+  "Units": [
+    {
+      "SingularName": "OhmPerMeter",
+      "PluralName": "OhmsPerMeter",
+      "FromUnitToBaseFunc": "{x}",
+      "FromBaseToUnitFunc": "{x}",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "Ω/m" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "OhmPerCentimeter",
+      "PluralName": "OhmsPerCentimeter",
+      "FromUnitToBaseFunc": "{x} / 100",
+      "FromBaseToUnitFunc": "{x} * 100",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "Ω/cm" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "OhmPerKilometer",
+      "PluralName": "OhmsPerKilometer",
+      "FromUnitToBaseFunc": "{x} * 1000",
+      "FromBaseToUnitFunc": "{x} / 1000",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "Ω/km" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "OhmPerMile",
+      "PluralName": "OhmsPerMile",
+      "FromUnitToBaseFunc": "{x} * 1609",
+      "FromBaseToUnitFunc": "{x} / 1609",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "Ω/mi" ]
+        }
+      ]
+    },
+    {
+      "SingularName": "OhmPerFoot",
+      "PluralName": "OhmsPerFoot",
+      "FromUnitToBaseFunc": "{x} / 3.2808398950131234",
+      "FromBaseToUnitFunc": "{x} * 3.2808398950131234",
+      "Prefixes": [ "Pico", "Nano", "Micro", "Milli", "Kilo", "Mega" ],
+      "Localization": [
+        {
+          "Culture": "en-US",
+          "Abbreviations": [ "Ω/ft" ]
+        }
+      ]
+    }
+  ]
+}
