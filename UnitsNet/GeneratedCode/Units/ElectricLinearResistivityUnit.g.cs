@@ -23,10 +23,44 @@ namespace UnitsNet.Units
     // Disable missing XML comment warnings for the generated unit enums.
     #pragma warning disable 1591
 
-    public enum MagnetizationUnit
+    public enum ElectricLinearResistivityUnit
     {
         Undefined = 0,
-        AmperePerMeter,
+        KiloohmPerCentimeter,
+        KiloohmPerFoot,
+        KiloohmPerKilometer,
+        KiloohmPerMeter,
+        KiloohmPerMile,
+        MegaohmPerCentimeter,
+        MegaohmPerFoot,
+        MegaohmPerKilometer,
+        MegaohmPerMeter,
+        MegaohmPerMile,
+        MicroohmPerCentimeter,
+        MicroohmPerFoot,
+        MicroohmPerKilometer,
+        MicroohmPerMeter,
+        MicroohmPerMile,
+        MilliohmPerCentimeter,
+        MilliohmPerFoot,
+        MilliohmPerKilometer,
+        MilliohmPerMeter,
+        MilliohmPerMile,
+        NanoohmPerCentimeter,
+        NanoohmPerFoot,
+        NanoohmPerKilometer,
+        NanoohmPerMeter,
+        NanoohmPerMile,
+        OhmPerCentimeter,
+        OhmPerFoot,
+        OhmPerKilometer,
+        OhmPerMeter,
+        OhmPerMile,
+        PicoohmPerCentimeter,
+        PicoohmPerFoot,
+        PicoohmPerKilometer,
+        PicoohmPerMeter,
+        PicoohmPerMile,
     }
 
     #pragma warning restore 1591

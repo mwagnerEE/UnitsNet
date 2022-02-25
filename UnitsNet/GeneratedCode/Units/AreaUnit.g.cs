@@ -27,7 +27,10 @@ namespace UnitsNet.Units
     {
         Undefined = 0,
         Acre,
+        AWG,
+        CircularMil,
         Hectare,
+        KilocircularMil,
         SquareCentimeter,
         SquareDecimeter,
         SquareFoot,
