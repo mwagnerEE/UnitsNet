@@ -21,8 +21,12 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Collections.Generic;
+using Fractions;
 using JetBrains.Annotations;
 using UnitsNet.InternalHelpers;
+using System.Numerics;
 using UnitsNet.Units;
 
 #nullable enable
@@ -39,14 +43,8 @@ namespace UnitsNet
     ///     https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity
     /// </remarks>
     [DataContract]
-    public partial struct ElectricConductivity : IQuantity<ElectricConductivityUnit>, IEquatable<ElectricConductivity>, IComparable, IComparable<ElectricConductivity>, IConvertible, IFormattable
+    public partial class ElectricConductivity :  QuantityBase, IQuantity<ElectricConductivityUnit>, IEquatable<ElectricConductivity>, IComparable, IComparable<ElectricConductivity>, IConvertible, IArithmetic, IFormattable
     {
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        [DataMember(Name = "Value", Order = 0)]
-        private readonly double _value;
-
         /// <summary>
         ///     The unit this quantity was constructed with.
         /// </summary>
@@ -55,24 +53,117 @@ namespace UnitsNet
 
         static ElectricConductivity()
         {
-            BaseDimensions = new BaseDimensions(-3, -1, 3, 2, 0, 0, 0);
+            BaseDimensions = new Dimensions(new Dictionary<Dimension, Fraction>()
+            {
+            {Dimension.Length, -3 },
+            {Dimension.Mass, -1 },
+            {Dimension.Time, 3 },
+            {Dimension.Current, 2 },
+            });
             BaseUnit = ElectricConductivityUnit.SiemensPerMeter;
-            MaxValue = new ElectricConductivity(double.MaxValue, BaseUnit);
-            MinValue = new ElectricConductivity(double.MinValue, BaseUnit);
-            QuantityType = QuantityType.ElectricConductivity;
             Units = Enum.GetValues(typeof(ElectricConductivityUnit)).Cast<ElectricConductivityUnit>().Except(new ElectricConductivityUnit[]{ ElectricConductivityUnit.Undefined }).ToArray();
             Zero = new ElectricConductivity(0, BaseUnit);
             Info = new QuantityInfo<ElectricConductivityUnit>("ElectricConductivity",
                 new UnitInfo<ElectricConductivityUnit>[]
                 {
-                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemensPerFoot, "SiemensPerFoot", BaseUnits.Undefined),
-                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemensPerInch, "SiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemenPerFoot, "KilosiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemenPerInch, "KilosiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemenPerKilofoot, "KilosiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemenPerKilometer, "KilosiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemenPerMile, "KilosiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.KilosiemensPerMeter, "KilosiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemenPerFoot, "MegasiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemenPerInch, "MegasiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemenPerKilofoot, "MegasiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemenPerKilometer, "MegasiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemenPerMile, "MegasiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MegasiemensPerMeter, "MegasiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemenPerFoot, "MicrosiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemenPerInch, "MicrosiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemenPerKilofoot, "MicrosiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemenPerKilometer, "MicrosiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemenPerMile, "MicrosiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MicrosiemensPerMeter, "MicrosiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemenPerFoot, "MillisiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemenPerInch, "MillisiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemenPerKilofoot, "MillisiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemenPerKilometer, "MillisiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemenPerMile, "MillisiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.MillisiemensPerMeter, "MillisiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemenPerFoot, "NanosiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemenPerInch, "NanosiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemenPerKilofoot, "NanosiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemenPerKilometer, "NanosiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemenPerMile, "NanosiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.NanosiemensPerMeter, "NanosiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemenPerFoot, "PicosiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemenPerInch, "PicosiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemenPerKilofoot, "PicosiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemenPerKilometer, "PicosiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemenPerMile, "PicosiemensPerMile", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.PicosiemensPerMeter, "PicosiemensPerMeter", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemenPerFoot, "SiemensPerFoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemenPerInch, "SiemensPerInch", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemenPerKilofoot, "SiemensPerKilofoot", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemenPerKilometer, "SiemensPerKilometer", BaseUnits.Undefined),
+                    new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemenPerMile, "SiemensPerMile", BaseUnits.Undefined),
                     new UnitInfo<ElectricConductivityUnit>(ElectricConductivityUnit.SiemensPerMeter, "SiemensPerMeter", new BaseUnits(length: LengthUnit.Meter, mass: MassUnit.Kilogram, time: DurationUnit.Second, current: ElectricCurrentUnit.Ampere)),
                 },
-                BaseUnit, Zero, BaseDimensions, QuantityType.ElectricConductivity);
+                BaseUnit, Zero, BaseDimensions);
 
             DefaultConversionFunctions = new UnitConverter();
+
             RegisterDefaultConversions(DefaultConversionFunctions);
+        }
+
+#if NET6_0_OR_GREATER
+        /// <inheritdoc/>
+        [RequiresPreviewFeatures]
+        public static IQuantity Construct(QuantityValue value, Enum unit) => new ElectricConductivity((QuantityValue)value, (ElectricConductivityUnit)unit);
+#endif
+
+        /// <summary>
+        ///     Creates the quantity with the a value of zero.
+        /// </summary>
+        public ElectricConductivity() : this(0, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public ElectricConductivity(QuantityValue value) : this(value, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public ElectricConductivity(double value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public ElectricConductivity(Complex value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public new static IQuantity FromBaseUnits(QuantityValue value)
+        {
+            return new ElectricConductivity(value);
         }
 
         /// <summary>
@@ -81,12 +172,11 @@ namespace UnitsNet
         /// <param name="value">The numeric value to construct this quantity with.</param>
         /// <param name="unit">The unit representation to construct this quantity with.</param>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
-        public ElectricConductivity(double value, ElectricConductivityUnit unit)
+        public ElectricConductivity(QuantityValue value, ElectricConductivityUnit unit) : base(value, BaseDimensions)
         {
             if (unit == ElectricConductivityUnit.Undefined)
               throw new ArgumentException("The quantity can not be created with an undefined unit.", nameof(unit));
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = unit;
         }
 
@@ -98,14 +188,13 @@ namespace UnitsNet
         /// <param name="unitSystem">The unit system to create the quantity with.</param>
         /// <exception cref="ArgumentNullException">The given <see cref="UnitSystem"/> is null.</exception>
         /// <exception cref="ArgumentException">No unit was found for the given <see cref="UnitSystem"/>.</exception>
-        public ElectricConductivity(double value, UnitSystem unitSystem)
+        public ElectricConductivity(QuantityValue value, UnitSystem unitSystem) : base(value, BaseDimensions)
         {
             if (unitSystem is null) throw new ArgumentNullException(nameof(unitSystem));
 
             var unitInfos = Info.GetUnitInfosFor(unitSystem.BaseUnits);
             var firstUnitInfo = unitInfos.FirstOrDefault();
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = firstUnitInfo?.Value ?? throw new ArgumentException("No units were found for the given UnitSystem.", nameof(unitSystem));
         }
 
@@ -120,32 +209,14 @@ namespace UnitsNet
         public static QuantityInfo<ElectricConductivityUnit> Info { get; }
 
         /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
+        ///     The <see cref="Dimensions" /> of this quantity.
         /// </summary>
-        public static BaseDimensions BaseDimensions { get; }
+        public static Dimensions BaseDimensions { get; }
 
         /// <summary>
         ///     The base unit of ElectricConductivity, which is SiemensPerMeter. All conversions go via this value.
         /// </summary>
         public static ElectricConductivityUnit BaseUnit { get; }
-
-        /// <summary>
-        /// Represents the largest possible value of ElectricConductivity
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static ElectricConductivity MaxValue { get; }
-
-        /// <summary>
-        /// Represents the smallest possible value of ElectricConductivity
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static ElectricConductivity MinValue { get; }
-
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public static QuantityType QuantityType { get; }
 
         /// <summary>
         ///     All units of measurement for the ElectricConductivity quantity.
@@ -161,51 +232,234 @@ namespace UnitsNet
 
         #region Properties
 
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        public double Value => _value;
-
         Enum IQuantity.Unit => Unit;
+
+        /// <inheritdoc />
+        public override QuantityValue InBaseUnits => As(BaseUnit);
 
         /// <inheritdoc />
         public ElectricConductivityUnit Unit => _unit.GetValueOrDefault(BaseUnit);
 
         /// <inheritdoc />
-        public QuantityInfo<ElectricConductivityUnit> QuantityInfo => Info;
+        public new QuantityInfo<ElectricConductivityUnit> QuantityInfo => Info;
 
         /// <inheritdoc cref="IQuantity.QuantityInfo"/>
         QuantityInfo IQuantity.QuantityInfo => Info;
 
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public QuantityType Type => QuantityType.ElectricConductivity;
-
-        /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
-        /// </summary>
-        public BaseDimensions Dimensions => ElectricConductivity.BaseDimensions;
 
         #endregion
 
         #region Conversion Properties
 
         /// <summary>
-        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemensPerFoot"/>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemenPerFoot"/>
         /// </summary>
-        public double SiemensPerFoot => As(ElectricConductivityUnit.SiemensPerFoot);
+        public QuantityValue KilosiemensPerFoot => As(ElectricConductivityUnit.KilosiemenPerFoot);
 
         /// <summary>
-        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemensPerInch"/>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemenPerInch"/>
         /// </summary>
-        public double SiemensPerInch => As(ElectricConductivityUnit.SiemensPerInch);
+        public QuantityValue KilosiemensPerInch => As(ElectricConductivityUnit.KilosiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue KilosiemensPerKilofoot => As(ElectricConductivityUnit.KilosiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue KilosiemensPerKilometer => As(ElectricConductivityUnit.KilosiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemenPerMile"/>
+        /// </summary>
+        public QuantityValue KilosiemensPerMile => As(ElectricConductivityUnit.KilosiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.KilosiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue KilosiemensPerMeter => As(ElectricConductivityUnit.KilosiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerFoot => As(ElectricConductivityUnit.MegasiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemenPerInch"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerInch => As(ElectricConductivityUnit.MegasiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerKilofoot => As(ElectricConductivityUnit.MegasiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerKilometer => As(ElectricConductivityUnit.MegasiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemenPerMile"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerMile => As(ElectricConductivityUnit.MegasiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MegasiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue MegasiemensPerMeter => As(ElectricConductivityUnit.MegasiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerFoot => As(ElectricConductivityUnit.MicrosiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemenPerInch"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerInch => As(ElectricConductivityUnit.MicrosiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerKilofoot => As(ElectricConductivityUnit.MicrosiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerKilometer => As(ElectricConductivityUnit.MicrosiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemenPerMile"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerMile => As(ElectricConductivityUnit.MicrosiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MicrosiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue MicrosiemensPerMeter => As(ElectricConductivityUnit.MicrosiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerFoot => As(ElectricConductivityUnit.MillisiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemenPerInch"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerInch => As(ElectricConductivityUnit.MillisiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerKilofoot => As(ElectricConductivityUnit.MillisiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerKilometer => As(ElectricConductivityUnit.MillisiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemenPerMile"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerMile => As(ElectricConductivityUnit.MillisiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.MillisiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue MillisiemensPerMeter => As(ElectricConductivityUnit.MillisiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerFoot => As(ElectricConductivityUnit.NanosiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemenPerInch"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerInch => As(ElectricConductivityUnit.NanosiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerKilofoot => As(ElectricConductivityUnit.NanosiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerKilometer => As(ElectricConductivityUnit.NanosiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemenPerMile"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerMile => As(ElectricConductivityUnit.NanosiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.NanosiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue NanosiemensPerMeter => As(ElectricConductivityUnit.NanosiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerFoot => As(ElectricConductivityUnit.PicosiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemenPerInch"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerInch => As(ElectricConductivityUnit.PicosiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerKilofoot => As(ElectricConductivityUnit.PicosiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerKilometer => As(ElectricConductivityUnit.PicosiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemenPerMile"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerMile => As(ElectricConductivityUnit.PicosiemenPerMile);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.PicosiemensPerMeter"/>
+        /// </summary>
+        public QuantityValue PicosiemensPerMeter => As(ElectricConductivityUnit.PicosiemensPerMeter);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemenPerFoot"/>
+        /// </summary>
+        public QuantityValue SiemensPerFoot => As(ElectricConductivityUnit.SiemenPerFoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemenPerInch"/>
+        /// </summary>
+        public QuantityValue SiemensPerInch => As(ElectricConductivityUnit.SiemenPerInch);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemenPerKilofoot"/>
+        /// </summary>
+        public QuantityValue SiemensPerKilofoot => As(ElectricConductivityUnit.SiemenPerKilofoot);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemenPerKilometer"/>
+        /// </summary>
+        public QuantityValue SiemensPerKilometer => As(ElectricConductivityUnit.SiemenPerKilometer);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemenPerMile"/>
+        /// </summary>
+        public QuantityValue SiemensPerMile => As(ElectricConductivityUnit.SiemenPerMile);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="ElectricConductivityUnit.SiemensPerMeter"/>
         /// </summary>
-        public double SiemensPerMeter => As(ElectricConductivityUnit.SiemensPerMeter);
+        public QuantityValue SiemensPerMeter => As(ElectricConductivityUnit.SiemensPerMeter);
 
         #endregion
 
@@ -218,21 +472,137 @@ namespace UnitsNet
         internal static void RegisterDefaultConversions(UnitConverter unitConverter)
         {
             // Register in unit converter: BaseUnit -> ElectricConductivityUnit
-            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemensPerFoot, quantity => new ElectricConductivity(quantity.Value / 3.2808398950131234, ElectricConductivityUnit.SiemensPerFoot));
-            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemensPerInch, quantity => new ElectricConductivity(quantity.Value / 3.937007874015748e1, ElectricConductivityUnit.SiemensPerInch));
-
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e3d, ElectricConductivityUnit.KilosiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e3d, ElectricConductivityUnit.KilosiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e3d, ElectricConductivityUnit.KilosiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e3d, ElectricConductivityUnit.KilosiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e3d, ElectricConductivityUnit.KilosiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.KilosiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e3d, ElectricConductivityUnit.KilosiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e6d, ElectricConductivityUnit.MegasiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e6d, ElectricConductivityUnit.MegasiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e6d, ElectricConductivityUnit.MegasiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e6d, ElectricConductivityUnit.MegasiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e6d, ElectricConductivityUnit.MegasiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MegasiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e6d, ElectricConductivityUnit.MegasiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e-6d, ElectricConductivityUnit.MicrosiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e-6d, ElectricConductivityUnit.MicrosiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e-6d, ElectricConductivityUnit.MicrosiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e-6d, ElectricConductivityUnit.MicrosiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e-6d, ElectricConductivityUnit.MicrosiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MicrosiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e-6d, ElectricConductivityUnit.MicrosiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e-3d, ElectricConductivityUnit.MillisiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e-3d, ElectricConductivityUnit.MillisiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e-3d, ElectricConductivityUnit.MillisiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e-3d, ElectricConductivityUnit.MillisiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e-3d, ElectricConductivityUnit.MillisiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.MillisiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e-3d, ElectricConductivityUnit.MillisiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e-9d, ElectricConductivityUnit.NanosiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e-9d, ElectricConductivityUnit.NanosiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e-9d, ElectricConductivityUnit.NanosiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e-9d, ElectricConductivityUnit.NanosiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e-9d, ElectricConductivityUnit.NanosiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.NanosiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e-9d, ElectricConductivityUnit.NanosiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemenPerFoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234) / 1e-12d, ElectricConductivityUnit.PicosiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemenPerInch, quantity => new ElectricConductivity((quantity.Value / 3.937007874015748e1) / 1e-12d, ElectricConductivityUnit.PicosiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemenPerKilofoot, quantity => new ElectricConductivity((quantity.Value / 3.2808398950131234e3) / 1e-12d, ElectricConductivityUnit.PicosiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemenPerKilometer, quantity => new ElectricConductivity((quantity.Value / 1000) / 1e-12d, ElectricConductivityUnit.PicosiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemenPerMile, quantity => new ElectricConductivity((quantity.Value / 1609) / 1e-12d, ElectricConductivityUnit.PicosiemenPerMile));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.PicosiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) / 1e-12d, ElectricConductivityUnit.PicosiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemenPerFoot, quantity => new ElectricConductivity(quantity.Value / 3.2808398950131234, ElectricConductivityUnit.SiemenPerFoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemenPerInch, quantity => new ElectricConductivity(quantity.Value / 3.937007874015748e1, ElectricConductivityUnit.SiemenPerInch));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemenPerKilofoot, quantity => new ElectricConductivity(quantity.Value / 3.2808398950131234e3, ElectricConductivityUnit.SiemenPerKilofoot));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemenPerKilometer, quantity => new ElectricConductivity(quantity.Value / 1000, ElectricConductivityUnit.SiemenPerKilometer));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemenPerMile, quantity => new ElectricConductivity(quantity.Value / 1609, ElectricConductivityUnit.SiemenPerMile));
             // Register in unit converter: BaseUnit <-> BaseUnit
             unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => quantity);
 
             // Register in unit converter: ElectricConductivityUnit -> BaseUnit
-            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 3.2808398950131234, ElectricConductivityUnit.SiemensPerMeter));
-            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemensPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 3.937007874015748e1, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.KilosiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MegasiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MicrosiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e-6d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.MillisiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e-3d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.NanosiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e-9d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.937007874015748e1) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 3.2808398950131234e3) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1000) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value * 1609) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.PicosiemensPerMeter, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity((quantity.Value) * 1e-12d, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemenPerFoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 3.2808398950131234, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemenPerInch, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 3.937007874015748e1, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemenPerKilofoot, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 3.2808398950131234e3, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemenPerKilometer, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 1000, ElectricConductivityUnit.SiemensPerMeter));
+            unitConverter.SetConversionFunction<ElectricConductivity>(ElectricConductivityUnit.SiemenPerMile, ElectricConductivityUnit.SiemensPerMeter, quantity => new ElectricConductivity(quantity.Value * 1609, ElectricConductivityUnit.SiemensPerMeter));
         }
 
         internal static void MapGeneratedLocalizations(UnitAbbreviationsCache unitAbbreviationsCache)
         {
-            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemensPerFoot, new CultureInfo("en-US"), false, true, new string[]{"S/ft"});
-            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemensPerInch, new CultureInfo("en-US"), false, true, new string[]{"S/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"kS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"kS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"kS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"kS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"kS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.KilosiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"kS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"MS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"MS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"MS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"MS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"MS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MegasiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"MS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"µS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"µS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"µS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"µS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"µS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MicrosiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"µS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"mS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"mS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"mS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"mS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"mS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.MillisiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"mS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"nS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"nS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"nS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"nS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"nS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.NanosiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"nS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"pS/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"pS/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"pS/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"pS/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"pS/mi"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.PicosiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"pS/m"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemenPerFoot, new CultureInfo("en-US"), false, true, new string[]{"S/ft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemenPerInch, new CultureInfo("en-US"), false, true, new string[]{"S/in"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemenPerKilofoot, new CultureInfo("en-US"), false, true, new string[]{"S/kft"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemenPerKilometer, new CultureInfo("en-US"), false, true, new string[]{"S/km"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemenPerMile, new CultureInfo("en-US"), false, true, new string[]{"S/mi"});
             unitAbbreviationsCache.PerformAbbreviationMapping(ElectricConductivityUnit.SiemensPerMeter, new CultureInfo("en-US"), false, true, new string[]{"S/m"});
         }
 
@@ -262,32 +632,381 @@ namespace UnitsNet
         #region Static Factory Methods
 
         /// <summary>
-        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemensPerFoot"/>.
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerFoot(QuantityValue kilosiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) kilosiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerInch(QuantityValue kilosiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) kilosiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerKilofoot(QuantityValue kilosiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) kilosiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerKilometer(QuantityValue kilosiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) kilosiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerMile(QuantityValue kilosiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) kilosiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.KilosiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromKilosiemensPerMeter(QuantityValue kilosiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) kilosiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.KilosiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerFoot(QuantityValue megasiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) megasiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerInch(QuantityValue megasiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) megasiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerKilofoot(QuantityValue megasiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) megasiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerKilometer(QuantityValue megasiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) megasiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerMile(QuantityValue megasiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) megasiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MegasiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMegasiemensPerMeter(QuantityValue megasiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) megasiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MegasiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerFoot(QuantityValue microsiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) microsiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerInch(QuantityValue microsiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) microsiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerKilofoot(QuantityValue microsiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) microsiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerKilometer(QuantityValue microsiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) microsiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerMile(QuantityValue microsiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) microsiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MicrosiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMicrosiemensPerMeter(QuantityValue microsiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) microsiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MicrosiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerFoot(QuantityValue millisiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) millisiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerInch(QuantityValue millisiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) millisiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerKilofoot(QuantityValue millisiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) millisiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerKilometer(QuantityValue millisiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) millisiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerMile(QuantityValue millisiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) millisiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.MillisiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromMillisiemensPerMeter(QuantityValue millisiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) millisiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.MillisiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerFoot(QuantityValue nanosiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) nanosiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerInch(QuantityValue nanosiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) nanosiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerKilofoot(QuantityValue nanosiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) nanosiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerKilometer(QuantityValue nanosiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) nanosiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerMile(QuantityValue nanosiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) nanosiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.NanosiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromNanosiemensPerMeter(QuantityValue nanosiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) nanosiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.NanosiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemenPerFoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerFoot(QuantityValue picosiemensperfoot)
+        {
+            QuantityValue value = (QuantityValue) picosiemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemenPerFoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemenPerInch"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerInch(QuantityValue picosiemensperinch)
+        {
+            QuantityValue value = (QuantityValue) picosiemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemenPerInch);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerKilofoot(QuantityValue picosiemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) picosiemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerKilometer(QuantityValue picosiemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) picosiemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerMile(QuantityValue picosiemenspermile)
+        {
+            QuantityValue value = (QuantityValue) picosiemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemenPerMile);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.PicosiemensPerMeter"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromPicosiemensPerMeter(QuantityValue picosiemenspermeter)
+        {
+            QuantityValue value = (QuantityValue) picosiemenspermeter;
+            return new ElectricConductivity(value, ElectricConductivityUnit.PicosiemensPerMeter);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemenPerFoot"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static ElectricConductivity FromSiemensPerFoot(QuantityValue siemensperfoot)
         {
-            double value = (double) siemensperfoot;
-            return new ElectricConductivity(value, ElectricConductivityUnit.SiemensPerFoot);
+            QuantityValue value = (QuantityValue) siemensperfoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.SiemenPerFoot);
         }
-
         /// <summary>
-        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemensPerInch"/>.
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemenPerInch"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static ElectricConductivity FromSiemensPerInch(QuantityValue siemensperinch)
         {
-            double value = (double) siemensperinch;
-            return new ElectricConductivity(value, ElectricConductivityUnit.SiemensPerInch);
+            QuantityValue value = (QuantityValue) siemensperinch;
+            return new ElectricConductivity(value, ElectricConductivityUnit.SiemenPerInch);
         }
-
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemenPerKilofoot"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromSiemensPerKilofoot(QuantityValue siemensperkilofoot)
+        {
+            QuantityValue value = (QuantityValue) siemensperkilofoot;
+            return new ElectricConductivity(value, ElectricConductivityUnit.SiemenPerKilofoot);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemenPerKilometer"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromSiemensPerKilometer(QuantityValue siemensperkilometer)
+        {
+            QuantityValue value = (QuantityValue) siemensperkilometer;
+            return new ElectricConductivity(value, ElectricConductivityUnit.SiemenPerKilometer);
+        }
+        /// <summary>
+        ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemenPerMile"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static ElectricConductivity FromSiemensPerMile(QuantityValue siemenspermile)
+        {
+            QuantityValue value = (QuantityValue) siemenspermile;
+            return new ElectricConductivity(value, ElectricConductivityUnit.SiemenPerMile);
+        }
         /// <summary>
         ///     Creates a <see cref="ElectricConductivity"/> from <see cref="ElectricConductivityUnit.SiemensPerMeter"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static ElectricConductivity FromSiemensPerMeter(QuantityValue siemenspermeter)
         {
-            double value = (double) siemenspermeter;
+            QuantityValue value = (QuantityValue) siemenspermeter;
             return new ElectricConductivity(value, ElectricConductivityUnit.SiemensPerMeter);
         }
 
@@ -299,7 +1018,7 @@ namespace UnitsNet
         /// <returns>ElectricConductivity unit value.</returns>
         public static ElectricConductivity From(QuantityValue value, ElectricConductivityUnit fromUnit)
         {
-            return new ElectricConductivity((double)value, fromUnit);
+            return new ElectricConductivity((QuantityValue)value, fromUnit);
         }
 
         #endregion
@@ -469,28 +1188,65 @@ namespace UnitsNet
         }
 
         /// <summary>Get <see cref="ElectricConductivity"/> from multiplying value and <see cref="ElectricConductivity"/>.</summary>
-        public static ElectricConductivity operator *(double left, ElectricConductivity right)
+        public static ElectricConductivity operator *(QuantityValue left, ElectricConductivity right)
         {
             return new ElectricConductivity(left * right.Value, right.Unit);
         }
 
         /// <summary>Get <see cref="ElectricConductivity"/> from multiplying value and <see cref="ElectricConductivity"/>.</summary>
-        public static ElectricConductivity operator *(ElectricConductivity left, double right)
+        public static ElectricConductivity operator *(ElectricConductivity left, QuantityValue right)
         {
             return new ElectricConductivity(left.Value * right, left.Unit);
         }
 
         /// <summary>Get <see cref="ElectricConductivity"/> from dividing <see cref="ElectricConductivity"/> by value.</summary>
-        public static ElectricConductivity operator /(ElectricConductivity left, double right)
+        public static ElectricConductivity operator /(ElectricConductivity left, QuantityValue right)
         {
             return new ElectricConductivity(left.Value / right, left.Unit);
         }
 
         /// <summary>Get ratio value from dividing <see cref="ElectricConductivity"/> by <see cref="ElectricConductivity"/>.</summary>
-        public static double operator /(ElectricConductivity left, ElectricConductivity right)
+        public static QuantityValue operator /(ElectricConductivity left, ElectricConductivity right)
         {
             return left.SiemensPerMeter / right.SiemensPerMeter;
         }
+
+        /// <summary>Negate the <see cref="ElectricConductivity"/>.</summary>
+        public new ElectricConductivity Negate()
+        {
+            return new ElectricConductivity(-this.Value, this.Unit);
+        }
+
+        /// <summary>Add two <see cref="ElectricConductivity"/> together</summary>
+        public ElectricConductivity Add(ElectricConductivity other)
+        {
+            return new ElectricConductivity(this.Value + other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Subtract one <see cref="ElectricConductivity"/> from another</summary>
+        public ElectricConductivity Subtract(ElectricConductivity other)
+        {
+            return new ElectricConductivity(this.Value - other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Scale the <see cref="ElectricConductivity"/> by a constant</summary>
+        public new ElectricConductivity Scale(double scaleFactor)
+        {
+            return new ElectricConductivity(scaleFactor * this.Value, this.Unit);
+        }
+
+
+        /// <summary>Negate the <see cref="ElectricConductivity"/>.</summary>
+        IQuantity IArithmetic.Negate() => Negate();
+
+        /// <summary>Add two <see cref="ElectricConductivity"/> together</summary>
+        IQuantity IArithmetic.Add(IQuantity other) => Add((ElectricConductivity)other);
+
+        /// <summary>Subtract one <see cref="ElectricConductivity"/> from another</summary>
+        IQuantity IArithmetic.Subtract(IQuantity other) => Subtract((ElectricConductivity)other);
+
+        /// <summary>Scale the <see cref="ElectricConductivity"/> by a constant</summary>
+        IQuantity IArithmetic.Scale(double scaleFactor) => Scale(scaleFactor);
 
         #endregion
 
@@ -524,7 +1280,15 @@ namespace UnitsNet
         /// <remarks>Consider using <see cref="Equals(ElectricConductivity, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
         public static bool operator ==(ElectricConductivity left, ElectricConductivity right)
         {
-            return left.Equals(right);
+            if(left is null ^ right is null)
+            {
+                return false;
+            }
+            else if(left is null && right is null)
+            {
+                return true;
+            }
+            return left!.Equals(right);
         }
 
         /// <summary>Returns true if not exactly equal.</summary>
@@ -535,7 +1299,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(object obj)
+        public new int CompareTo(object? obj)
         {
             if (obj is null) throw new ArgumentNullException(nameof(obj));
             if (!(obj is ElectricConductivity objElectricConductivity)) throw new ArgumentException("Expected type ElectricConductivity.", nameof(obj));
@@ -544,14 +1308,18 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(ElectricConductivity other)
+        public int CompareTo(ElectricConductivity? other)
         {
-            return _value.CompareTo(other.GetValueAs(this.Unit));
+            if(other is ElectricConductivity otherElectricConductivity)
+            {
+                return Value.CompareTo(otherElectricConductivity.GetValueAs(this.Unit));
+            }
+            return 1; //Any value is greater than null
         }
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(ElectricConductivity, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null || !(obj is ElectricConductivity objElectricConductivity))
                 return false;
@@ -561,9 +1329,9 @@ namespace UnitsNet
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(ElectricConductivity, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public bool Equals(ElectricConductivity other)
+        public bool Equals(ElectricConductivity? other)
         {
-            return _value.Equals(other.GetValueAs(this.Unit));
+            return Value.Equals(other?.GetValueAs(this.Unit));
         }
 
         /// <summary>
@@ -611,8 +1379,8 @@ namespace UnitsNet
             if (tolerance < 0)
                 throw new ArgumentOutOfRangeException("tolerance", "Tolerance must be greater than or equal to 0.");
 
-            double thisValue = (double)this.Value;
-            double otherValueInThisUnits = other.As(this.Unit);
+            QuantityValue thisValue = this.Value;
+            QuantityValue otherValueInThisUnits = other.As(this.Unit);
 
             return UnitsNet.Comparison.Equals(thisValue, otherValueInThisUnits, tolerance, comparisonType);
         }
@@ -634,17 +1402,17 @@ namespace UnitsNet
         ///     Convert to the unit representation <paramref name="unit" />.
         /// </summary>
         /// <returns>Value converted to the specified unit.</returns>
-        public double As(ElectricConductivityUnit unit)
+        public QuantityValue As(ElectricConductivityUnit unit)
         {
             if (Unit == unit)
-                return Convert.ToDouble(Value);
+                return Value;
 
             var converted = GetValueAs(unit);
-            return Convert.ToDouble(converted);
+            return converted;
         }
 
         /// <inheritdoc cref="IQuantity.As(UnitSystem)"/>
-        public double As(UnitSystem unitSystem)
+        public QuantityValue As(UnitSystem unitSystem)
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -659,7 +1427,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        double IQuantity.As(Enum unit)
+        QuantityValue IQuantity.As(Enum unit)
         {
             if (!(unit is ElectricConductivityUnit unitAsElectricConductivityUnit))
                 throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(ElectricConductivityUnit)} is supported.", nameof(unit));
@@ -717,8 +1485,21 @@ namespace UnitsNet
             return ToUnit(unitAsElectricConductivityUnit, DefaultConversionFunctions);
         }
 
+        /// <inheritdoc />
+        IQuantity IQuantity.ToUnit(Enum unit, UnitConverter unitConverter)
+        {
+            if (!(unit is ElectricConductivityUnit unitAsElectricConductivityUnit))
+                throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(ElectricConductivityUnit)} is supported.", nameof(unit));
+
+            return ToUnit(unitAsElectricConductivityUnit, unitConverter);
+        }
+
         /// <inheritdoc cref="IQuantity.ToUnit(UnitSystem)"/>
-        public ElectricConductivity ToUnit(UnitSystem unitSystem)
+#if NET5_0_OR_GREATER
+        public override ElectricConductivity ToUnit(UnitSystem unitSystem)
+#else
+        public override IQuantity ToUnit(UnitSystem unitSystem)
+#endif
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -739,12 +1520,15 @@ namespace UnitsNet
         IQuantity<ElectricConductivityUnit> IQuantity<ElectricConductivityUnit>.ToUnit(ElectricConductivityUnit unit) => ToUnit(unit);
 
         /// <inheritdoc />
-        IQuantity<ElectricConductivityUnit> IQuantity<ElectricConductivityUnit>.ToUnit(UnitSystem unitSystem) => ToUnit(unitSystem);
+        IQuantity<ElectricConductivityUnit> IQuantity<ElectricConductivityUnit>.ToUnit(ElectricConductivityUnit unit, UnitConverter unitConverter) => ToUnit(unit, unitConverter);
 
-        private double GetValueAs(ElectricConductivityUnit unit)
+        /// <inheritdoc />
+        IQuantity<ElectricConductivityUnit> IQuantity<ElectricConductivityUnit>.ToUnit(UnitSystem unitSystem) => (IQuantity<ElectricConductivityUnit>)ToUnit(unitSystem);
+
+        private QuantityValue GetValueAs(ElectricConductivityUnit unit)
         {
             var converted = ToUnit(unit);
-            return (double)converted.Value;
+            return (QuantityValue)converted.Value;
         }
 
         #endregion
@@ -765,43 +1549,9 @@ namespace UnitsNet
         /// </summary>
         /// <returns>String representation.</returns>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        public string ToString(IFormatProvider? provider)
+        public override string ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="significantDigitsAfterRadix">The number of significant digits after the radix point.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete(@"This method is deprecated and will be removed at a future release. Please use ToString(""s2"") or ToString(""s2"", provider) where 2 is an example of the number passed to significantDigitsAfterRadix.")]
-        public string ToString(IFormatProvider? provider, int significantDigitsAfterRadix)
-        {
-            var value = Convert.ToDouble(Value);
-            var format = UnitFormatter.GetFormat(value, significantDigitsAfterRadix);
-            return ToString(provider, format);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="format">String format to use. Default:  "{0:0.##} {1} for value and unit abbreviation respectively."</param>
-        /// <param name="args">Arguments for string format. Value and unit are implicitly included as arguments 0 and 1.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete("This method is deprecated and will be removed at a future release. Please use string.Format().")]
-        public string ToString(IFormatProvider? provider, [NotNull] string format, [NotNull] params object[] args)
-        {
-            if (format == null) throw new ArgumentNullException(nameof(format));
-            if (args == null) throw new ArgumentNullException(nameof(args));
-
-            provider = provider ?? CultureInfo.CurrentUICulture;
-
-            var value = Convert.ToDouble(Value);
-            var formatArgs = UnitFormatter.GetFormatArgs(Unit, value, provider, args);
-            return string.Format(provider, format, formatArgs);
         }
 
         /// <inheritdoc cref="QuantityFormatter.Format{TUnitType}(IQuantity{TUnitType}, string, IFormatProvider)"/>
@@ -822,7 +1572,7 @@ namespace UnitsNet
         /// <param name="format">The format string.</param>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
         /// <returns>The string representation.</returns>
-        public string ToString(string format, IFormatProvider? provider)
+        public override string ToString(string? format, IFormatProvider? provider)
         {
             return QuantityFormatter.Format<ElectricConductivityUnit>(this, format, provider);
         }
@@ -836,95 +1586,93 @@ namespace UnitsNet
             return TypeCode.Object;
         }
 
-        bool IConvertible.ToBoolean(IFormatProvider provider)
+        bool IConvertible.ToBoolean(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(ElectricConductivity)} to bool is not supported.");
         }
 
-        byte IConvertible.ToByte(IFormatProvider provider)
+        byte IConvertible.ToByte(IFormatProvider? provider)
         {
-            return Convert.ToByte(_value);
+            return Convert.ToByte(Value);
         }
 
-        char IConvertible.ToChar(IFormatProvider provider)
+        char IConvertible.ToChar(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(ElectricConductivity)} to char is not supported.");
         }
 
-        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        DateTime IConvertible.ToDateTime(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(ElectricConductivity)} to DateTime is not supported.");
         }
 
-        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        decimal IConvertible.ToDecimal(IFormatProvider? provider)
         {
-            return Convert.ToDecimal(_value);
+            return Convert.ToDecimal(Value);
         }
 
-        double IConvertible.ToDouble(IFormatProvider provider)
+        double IConvertible.ToDouble(IFormatProvider? provider)
         {
-            return Convert.ToDouble(_value);
+            return Convert.ToDouble(Value);
         }
 
-        short IConvertible.ToInt16(IFormatProvider provider)
+        short IConvertible.ToInt16(IFormatProvider? provider)
         {
-            return Convert.ToInt16(_value);
+            return Convert.ToInt16(Value);
         }
 
-        int IConvertible.ToInt32(IFormatProvider provider)
+        int IConvertible.ToInt32(IFormatProvider? provider)
         {
-            return Convert.ToInt32(_value);
+            return Convert.ToInt32(Value);
         }
 
-        long IConvertible.ToInt64(IFormatProvider provider)
+        long IConvertible.ToInt64(IFormatProvider? provider)
         {
-            return Convert.ToInt64(_value);
+            return Convert.ToInt64(Value);
         }
 
-        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        sbyte IConvertible.ToSByte(IFormatProvider? provider)
         {
-            return Convert.ToSByte(_value);
+            return Convert.ToSByte(Value);
         }
 
-        float IConvertible.ToSingle(IFormatProvider provider)
+        float IConvertible.ToSingle(IFormatProvider? provider)
         {
-            return Convert.ToSingle(_value);
+            return Convert.ToSingle(Value);
         }
 
-        string IConvertible.ToString(IFormatProvider provider)
+        string IConvertible.ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
         }
 
-        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        object IConvertible.ToType(Type conversionType, IFormatProvider? provider)
         {
             if (conversionType == typeof(ElectricConductivity))
                 return this;
             else if (conversionType == typeof(ElectricConductivityUnit))
                 return Unit;
-            else if (conversionType == typeof(QuantityType))
-                return ElectricConductivity.QuantityType;
             else if (conversionType == typeof(QuantityInfo))
                 return ElectricConductivity.Info;
-            else if (conversionType == typeof(BaseDimensions))
+            else if (conversionType == typeof(Dimensions))
                 return ElectricConductivity.BaseDimensions;
             else
                 throw new InvalidCastException($"Converting {typeof(ElectricConductivity)} to {conversionType} is not supported.");
         }
 
-        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        ushort IConvertible.ToUInt16(IFormatProvider? provider)
         {
-            return Convert.ToUInt16(_value);
+            return Convert.ToUInt16(Value);
         }
 
-        uint IConvertible.ToUInt32(IFormatProvider provider)
+        uint IConvertible.ToUInt32(IFormatProvider? provider)
         {
-            return Convert.ToUInt32(_value);
+            return Convert.ToUInt32(Value);
         }
 
-        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        ulong IConvertible.ToUInt64(IFormatProvider? provider)
         {
-            return Convert.ToUInt64(_value);
+            return Convert.ToUInt64(Value);
         }
 
         #endregion

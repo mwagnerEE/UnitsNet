@@ -21,8 +21,12 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Collections.Generic;
+using Fractions;
 using JetBrains.Annotations;
 using UnitsNet.InternalHelpers;
+using System.Numerics;
 using UnitsNet.Units;
 
 #nullable enable
@@ -36,14 +40,8 @@ namespace UnitsNet
     ///     In physics, mass (from Greek μᾶζα "barley cake, lump [of dough]") is a property of a physical system or body, giving rise to the phenomena of the body's resistance to being accelerated by a force and the strength of its mutual gravitational attraction with other bodies. Instruments such as mass balances or scales use those phenomena to measure mass. The SI unit of mass is the kilogram (kg).
     /// </summary>
     [DataContract]
-    public partial struct Mass : IQuantity<MassUnit>, IEquatable<Mass>, IComparable, IComparable<Mass>, IConvertible, IFormattable
+    public partial class Mass :  QuantityBase, IQuantity<MassUnit>, IEquatable<Mass>, IComparable, IComparable<Mass>, IConvertible, IArithmetic, IFormattable
     {
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        [DataMember(Name = "Value", Order = 0)]
-        private readonly double _value;
-
         /// <summary>
         ///     The unit this quantity was constructed with.
         /// </summary>
@@ -52,11 +50,11 @@ namespace UnitsNet
 
         static Mass()
         {
-            BaseDimensions = new BaseDimensions(0, 1, 0, 0, 0, 0, 0);
+            BaseDimensions = new Dimensions(new Dictionary<Dimension, Fraction>()
+            {
+            {Dimension.Mass, 1 },
+            });
             BaseUnit = MassUnit.Kilogram;
-            MaxValue = new Mass(double.MaxValue, BaseUnit);
-            MinValue = new Mass(double.MinValue, BaseUnit);
-            QuantityType = QuantityType.Mass;
             Units = Enum.GetValues(typeof(MassUnit)).Cast<MassUnit>().Except(new MassUnit[]{ MassUnit.Undefined }).ToArray();
             Zero = new Mass(0, BaseUnit);
             Info = new QuantityInfo<MassUnit>("Mass",
@@ -88,10 +86,61 @@ namespace UnitsNet
                     new UnitInfo<MassUnit>(MassUnit.Stone, "Stone", new BaseUnits(mass: MassUnit.Stone)),
                     new UnitInfo<MassUnit>(MassUnit.Tonne, "Tonnes", new BaseUnits(mass: MassUnit.Tonne)),
                 },
-                BaseUnit, Zero, BaseDimensions, QuantityType.Mass);
+                BaseUnit, Zero, BaseDimensions);
 
             DefaultConversionFunctions = new UnitConverter();
+
             RegisterDefaultConversions(DefaultConversionFunctions);
+        }
+
+#if NET6_0_OR_GREATER
+        /// <inheritdoc/>
+        [RequiresPreviewFeatures]
+        public static IQuantity Construct(QuantityValue value, Enum unit) => new Mass((QuantityValue)value, (MassUnit)unit);
+#endif
+
+        /// <summary>
+        ///     Creates the quantity with the a value of zero.
+        /// </summary>
+        public Mass() : this(0, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Mass(QuantityValue value) : this(value, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Mass(double value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Mass(Complex value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public new static IQuantity FromBaseUnits(QuantityValue value)
+        {
+            return new Mass(value);
         }
 
         /// <summary>
@@ -100,12 +149,11 @@ namespace UnitsNet
         /// <param name="value">The numeric value to construct this quantity with.</param>
         /// <param name="unit">The unit representation to construct this quantity with.</param>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
-        public Mass(double value, MassUnit unit)
+        public Mass(QuantityValue value, MassUnit unit) : base(value, BaseDimensions)
         {
             if (unit == MassUnit.Undefined)
               throw new ArgumentException("The quantity can not be created with an undefined unit.", nameof(unit));
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = unit;
         }
 
@@ -117,14 +165,13 @@ namespace UnitsNet
         /// <param name="unitSystem">The unit system to create the quantity with.</param>
         /// <exception cref="ArgumentNullException">The given <see cref="UnitSystem"/> is null.</exception>
         /// <exception cref="ArgumentException">No unit was found for the given <see cref="UnitSystem"/>.</exception>
-        public Mass(double value, UnitSystem unitSystem)
+        public Mass(QuantityValue value, UnitSystem unitSystem) : base(value, BaseDimensions)
         {
             if (unitSystem is null) throw new ArgumentNullException(nameof(unitSystem));
 
             var unitInfos = Info.GetUnitInfosFor(unitSystem.BaseUnits);
             var firstUnitInfo = unitInfos.FirstOrDefault();
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = firstUnitInfo?.Value ?? throw new ArgumentException("No units were found for the given UnitSystem.", nameof(unitSystem));
         }
 
@@ -139,32 +186,14 @@ namespace UnitsNet
         public static QuantityInfo<MassUnit> Info { get; }
 
         /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
+        ///     The <see cref="Dimensions" /> of this quantity.
         /// </summary>
-        public static BaseDimensions BaseDimensions { get; }
+        public static Dimensions BaseDimensions { get; }
 
         /// <summary>
         ///     The base unit of Mass, which is Kilogram. All conversions go via this value.
         /// </summary>
         public static MassUnit BaseUnit { get; }
-
-        /// <summary>
-        /// Represents the largest possible value of Mass
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Mass MaxValue { get; }
-
-        /// <summary>
-        /// Represents the smallest possible value of Mass
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Mass MinValue { get; }
-
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public static QuantityType QuantityType { get; }
 
         /// <summary>
         ///     All units of measurement for the Mass quantity.
@@ -180,32 +209,20 @@ namespace UnitsNet
 
         #region Properties
 
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        public double Value => _value;
-
         Enum IQuantity.Unit => Unit;
+
+        /// <inheritdoc />
+        public override QuantityValue InBaseUnits => As(BaseUnit);
 
         /// <inheritdoc />
         public MassUnit Unit => _unit.GetValueOrDefault(BaseUnit);
 
         /// <inheritdoc />
-        public QuantityInfo<MassUnit> QuantityInfo => Info;
+        public new QuantityInfo<MassUnit> QuantityInfo => Info;
 
         /// <inheritdoc cref="IQuantity.QuantityInfo"/>
         QuantityInfo IQuantity.QuantityInfo => Info;
 
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public QuantityType Type => QuantityType.Mass;
-
-        /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
-        /// </summary>
-        public BaseDimensions Dimensions => Mass.BaseDimensions;
 
         #endregion
 
@@ -214,127 +231,127 @@ namespace UnitsNet
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Centigram"/>
         /// </summary>
-        public double Centigrams => As(MassUnit.Centigram);
+        public QuantityValue Centigrams => As(MassUnit.Centigram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Decagram"/>
         /// </summary>
-        public double Decagrams => As(MassUnit.Decagram);
+        public QuantityValue Decagrams => As(MassUnit.Decagram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Decigram"/>
         /// </summary>
-        public double Decigrams => As(MassUnit.Decigram);
+        public QuantityValue Decigrams => As(MassUnit.Decigram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.EarthMass"/>
         /// </summary>
-        public double EarthMasses => As(MassUnit.EarthMass);
+        public QuantityValue EarthMasses => As(MassUnit.EarthMass);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Grain"/>
         /// </summary>
-        public double Grains => As(MassUnit.Grain);
+        public QuantityValue Grains => As(MassUnit.Grain);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Gram"/>
         /// </summary>
-        public double Grams => As(MassUnit.Gram);
+        public QuantityValue Grams => As(MassUnit.Gram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Hectogram"/>
         /// </summary>
-        public double Hectograms => As(MassUnit.Hectogram);
+        public QuantityValue Hectograms => As(MassUnit.Hectogram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Kilogram"/>
         /// </summary>
-        public double Kilograms => As(MassUnit.Kilogram);
+        public QuantityValue Kilograms => As(MassUnit.Kilogram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Kilopound"/>
         /// </summary>
-        public double Kilopounds => As(MassUnit.Kilopound);
+        public QuantityValue Kilopounds => As(MassUnit.Kilopound);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Kilotonne"/>
         /// </summary>
-        public double Kilotonnes => As(MassUnit.Kilotonne);
+        public QuantityValue Kilotonnes => As(MassUnit.Kilotonne);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.LongHundredweight"/>
         /// </summary>
-        public double LongHundredweight => As(MassUnit.LongHundredweight);
+        public QuantityValue LongHundredweight => As(MassUnit.LongHundredweight);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.LongTon"/>
         /// </summary>
-        public double LongTons => As(MassUnit.LongTon);
+        public QuantityValue LongTons => As(MassUnit.LongTon);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Megapound"/>
         /// </summary>
-        public double Megapounds => As(MassUnit.Megapound);
+        public QuantityValue Megapounds => As(MassUnit.Megapound);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Megatonne"/>
         /// </summary>
-        public double Megatonnes => As(MassUnit.Megatonne);
+        public QuantityValue Megatonnes => As(MassUnit.Megatonne);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Microgram"/>
         /// </summary>
-        public double Micrograms => As(MassUnit.Microgram);
+        public QuantityValue Micrograms => As(MassUnit.Microgram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Milligram"/>
         /// </summary>
-        public double Milligrams => As(MassUnit.Milligram);
+        public QuantityValue Milligrams => As(MassUnit.Milligram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Nanogram"/>
         /// </summary>
-        public double Nanograms => As(MassUnit.Nanogram);
+        public QuantityValue Nanograms => As(MassUnit.Nanogram);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Ounce"/>
         /// </summary>
-        public double Ounces => As(MassUnit.Ounce);
+        public QuantityValue Ounces => As(MassUnit.Ounce);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Pound"/>
         /// </summary>
-        public double Pounds => As(MassUnit.Pound);
+        public QuantityValue Pounds => As(MassUnit.Pound);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.ShortHundredweight"/>
         /// </summary>
-        public double ShortHundredweight => As(MassUnit.ShortHundredweight);
+        public QuantityValue ShortHundredweight => As(MassUnit.ShortHundredweight);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.ShortTon"/>
         /// </summary>
-        public double ShortTons => As(MassUnit.ShortTon);
+        public QuantityValue ShortTons => As(MassUnit.ShortTon);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Slug"/>
         /// </summary>
-        public double Slugs => As(MassUnit.Slug);
+        public QuantityValue Slugs => As(MassUnit.Slug);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.SolarMass"/>
         /// </summary>
-        public double SolarMasses => As(MassUnit.SolarMass);
+        public QuantityValue SolarMasses => As(MassUnit.SolarMass);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Stone"/>
         /// </summary>
-        public double Stone => As(MassUnit.Stone);
+        public QuantityValue Stone => As(MassUnit.Stone);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="MassUnit.Tonne"/>
         /// </summary>
-        public double Tonnes => As(MassUnit.Tonne);
+        public QuantityValue Tonnes => As(MassUnit.Tonne);
 
         #endregion
 
@@ -371,7 +388,6 @@ namespace UnitsNet
             unitConverter.SetConversionFunction<Mass>(MassUnit.Kilogram, MassUnit.SolarMass, quantity => new Mass(quantity.Value / 1.98947e30, MassUnit.SolarMass));
             unitConverter.SetConversionFunction<Mass>(MassUnit.Kilogram, MassUnit.Stone, quantity => new Mass(quantity.Value * 0.1574731728702698, MassUnit.Stone));
             unitConverter.SetConversionFunction<Mass>(MassUnit.Kilogram, MassUnit.Tonne, quantity => new Mass(quantity.Value / 1e3, MassUnit.Tonne));
-
             // Register in unit converter: BaseUnit <-> BaseUnit
             unitConverter.SetConversionFunction<Mass>(MassUnit.Kilogram, MassUnit.Kilogram, quantity => quantity);
 
@@ -497,247 +513,223 @@ namespace UnitsNet
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromCentigrams(QuantityValue centigrams)
         {
-            double value = (double) centigrams;
+            QuantityValue value = (QuantityValue) centigrams;
             return new Mass(value, MassUnit.Centigram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Decagram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromDecagrams(QuantityValue decagrams)
         {
-            double value = (double) decagrams;
+            QuantityValue value = (QuantityValue) decagrams;
             return new Mass(value, MassUnit.Decagram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Decigram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromDecigrams(QuantityValue decigrams)
         {
-            double value = (double) decigrams;
+            QuantityValue value = (QuantityValue) decigrams;
             return new Mass(value, MassUnit.Decigram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.EarthMass"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromEarthMasses(QuantityValue earthmasses)
         {
-            double value = (double) earthmasses;
+            QuantityValue value = (QuantityValue) earthmasses;
             return new Mass(value, MassUnit.EarthMass);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Grain"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromGrains(QuantityValue grains)
         {
-            double value = (double) grains;
+            QuantityValue value = (QuantityValue) grains;
             return new Mass(value, MassUnit.Grain);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Gram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromGrams(QuantityValue grams)
         {
-            double value = (double) grams;
+            QuantityValue value = (QuantityValue) grams;
             return new Mass(value, MassUnit.Gram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Hectogram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromHectograms(QuantityValue hectograms)
         {
-            double value = (double) hectograms;
+            QuantityValue value = (QuantityValue) hectograms;
             return new Mass(value, MassUnit.Hectogram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Kilogram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromKilograms(QuantityValue kilograms)
         {
-            double value = (double) kilograms;
+            QuantityValue value = (QuantityValue) kilograms;
             return new Mass(value, MassUnit.Kilogram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Kilopound"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromKilopounds(QuantityValue kilopounds)
         {
-            double value = (double) kilopounds;
+            QuantityValue value = (QuantityValue) kilopounds;
             return new Mass(value, MassUnit.Kilopound);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Kilotonne"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromKilotonnes(QuantityValue kilotonnes)
         {
-            double value = (double) kilotonnes;
+            QuantityValue value = (QuantityValue) kilotonnes;
             return new Mass(value, MassUnit.Kilotonne);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.LongHundredweight"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromLongHundredweight(QuantityValue longhundredweight)
         {
-            double value = (double) longhundredweight;
+            QuantityValue value = (QuantityValue) longhundredweight;
             return new Mass(value, MassUnit.LongHundredweight);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.LongTon"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromLongTons(QuantityValue longtons)
         {
-            double value = (double) longtons;
+            QuantityValue value = (QuantityValue) longtons;
             return new Mass(value, MassUnit.LongTon);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Megapound"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromMegapounds(QuantityValue megapounds)
         {
-            double value = (double) megapounds;
+            QuantityValue value = (QuantityValue) megapounds;
             return new Mass(value, MassUnit.Megapound);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Megatonne"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromMegatonnes(QuantityValue megatonnes)
         {
-            double value = (double) megatonnes;
+            QuantityValue value = (QuantityValue) megatonnes;
             return new Mass(value, MassUnit.Megatonne);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Microgram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromMicrograms(QuantityValue micrograms)
         {
-            double value = (double) micrograms;
+            QuantityValue value = (QuantityValue) micrograms;
             return new Mass(value, MassUnit.Microgram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Milligram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromMilligrams(QuantityValue milligrams)
         {
-            double value = (double) milligrams;
+            QuantityValue value = (QuantityValue) milligrams;
             return new Mass(value, MassUnit.Milligram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Nanogram"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromNanograms(QuantityValue nanograms)
         {
-            double value = (double) nanograms;
+            QuantityValue value = (QuantityValue) nanograms;
             return new Mass(value, MassUnit.Nanogram);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Ounce"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromOunces(QuantityValue ounces)
         {
-            double value = (double) ounces;
+            QuantityValue value = (QuantityValue) ounces;
             return new Mass(value, MassUnit.Ounce);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Pound"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromPounds(QuantityValue pounds)
         {
-            double value = (double) pounds;
+            QuantityValue value = (QuantityValue) pounds;
             return new Mass(value, MassUnit.Pound);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.ShortHundredweight"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromShortHundredweight(QuantityValue shorthundredweight)
         {
-            double value = (double) shorthundredweight;
+            QuantityValue value = (QuantityValue) shorthundredweight;
             return new Mass(value, MassUnit.ShortHundredweight);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.ShortTon"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromShortTons(QuantityValue shorttons)
         {
-            double value = (double) shorttons;
+            QuantityValue value = (QuantityValue) shorttons;
             return new Mass(value, MassUnit.ShortTon);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Slug"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromSlugs(QuantityValue slugs)
         {
-            double value = (double) slugs;
+            QuantityValue value = (QuantityValue) slugs;
             return new Mass(value, MassUnit.Slug);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.SolarMass"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromSolarMasses(QuantityValue solarmasses)
         {
-            double value = (double) solarmasses;
+            QuantityValue value = (QuantityValue) solarmasses;
             return new Mass(value, MassUnit.SolarMass);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Stone"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromStone(QuantityValue stone)
         {
-            double value = (double) stone;
+            QuantityValue value = (QuantityValue) stone;
             return new Mass(value, MassUnit.Stone);
         }
-
         /// <summary>
         ///     Creates a <see cref="Mass"/> from <see cref="MassUnit.Tonne"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Mass FromTonnes(QuantityValue tonnes)
         {
-            double value = (double) tonnes;
+            QuantityValue value = (QuantityValue) tonnes;
             return new Mass(value, MassUnit.Tonne);
         }
 
@@ -749,7 +741,7 @@ namespace UnitsNet
         /// <returns>Mass unit value.</returns>
         public static Mass From(QuantityValue value, MassUnit fromUnit)
         {
-            return new Mass((double)value, fromUnit);
+            return new Mass((QuantityValue)value, fromUnit);
         }
 
         #endregion
@@ -919,28 +911,65 @@ namespace UnitsNet
         }
 
         /// <summary>Get <see cref="Mass"/> from multiplying value and <see cref="Mass"/>.</summary>
-        public static Mass operator *(double left, Mass right)
+        public static Mass operator *(QuantityValue left, Mass right)
         {
             return new Mass(left * right.Value, right.Unit);
         }
 
         /// <summary>Get <see cref="Mass"/> from multiplying value and <see cref="Mass"/>.</summary>
-        public static Mass operator *(Mass left, double right)
+        public static Mass operator *(Mass left, QuantityValue right)
         {
             return new Mass(left.Value * right, left.Unit);
         }
 
         /// <summary>Get <see cref="Mass"/> from dividing <see cref="Mass"/> by value.</summary>
-        public static Mass operator /(Mass left, double right)
+        public static Mass operator /(Mass left, QuantityValue right)
         {
             return new Mass(left.Value / right, left.Unit);
         }
 
         /// <summary>Get ratio value from dividing <see cref="Mass"/> by <see cref="Mass"/>.</summary>
-        public static double operator /(Mass left, Mass right)
+        public static QuantityValue operator /(Mass left, Mass right)
         {
             return left.Kilograms / right.Kilograms;
         }
+
+        /// <summary>Negate the <see cref="Mass"/>.</summary>
+        public new Mass Negate()
+        {
+            return new Mass(-this.Value, this.Unit);
+        }
+
+        /// <summary>Add two <see cref="Mass"/> together</summary>
+        public Mass Add(Mass other)
+        {
+            return new Mass(this.Value + other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Subtract one <see cref="Mass"/> from another</summary>
+        public Mass Subtract(Mass other)
+        {
+            return new Mass(this.Value - other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Scale the <see cref="Mass"/> by a constant</summary>
+        public new Mass Scale(double scaleFactor)
+        {
+            return new Mass(scaleFactor * this.Value, this.Unit);
+        }
+
+
+        /// <summary>Negate the <see cref="Mass"/>.</summary>
+        IQuantity IArithmetic.Negate() => Negate();
+
+        /// <summary>Add two <see cref="Mass"/> together</summary>
+        IQuantity IArithmetic.Add(IQuantity other) => Add((Mass)other);
+
+        /// <summary>Subtract one <see cref="Mass"/> from another</summary>
+        IQuantity IArithmetic.Subtract(IQuantity other) => Subtract((Mass)other);
+
+        /// <summary>Scale the <see cref="Mass"/> by a constant</summary>
+        IQuantity IArithmetic.Scale(double scaleFactor) => Scale(scaleFactor);
 
         #endregion
 
@@ -974,7 +1003,15 @@ namespace UnitsNet
         /// <remarks>Consider using <see cref="Equals(Mass, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
         public static bool operator ==(Mass left, Mass right)
         {
-            return left.Equals(right);
+            if(left is null ^ right is null)
+            {
+                return false;
+            }
+            else if(left is null && right is null)
+            {
+                return true;
+            }
+            return left!.Equals(right);
         }
 
         /// <summary>Returns true if not exactly equal.</summary>
@@ -985,7 +1022,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(object obj)
+        public new int CompareTo(object? obj)
         {
             if (obj is null) throw new ArgumentNullException(nameof(obj));
             if (!(obj is Mass objMass)) throw new ArgumentException("Expected type Mass.", nameof(obj));
@@ -994,14 +1031,18 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(Mass other)
+        public int CompareTo(Mass? other)
         {
-            return _value.CompareTo(other.GetValueAs(this.Unit));
+            if(other is Mass otherMass)
+            {
+                return Value.CompareTo(otherMass.GetValueAs(this.Unit));
+            }
+            return 1; //Any value is greater than null
         }
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Mass, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null || !(obj is Mass objMass))
                 return false;
@@ -1011,9 +1052,9 @@ namespace UnitsNet
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Mass, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public bool Equals(Mass other)
+        public bool Equals(Mass? other)
         {
-            return _value.Equals(other.GetValueAs(this.Unit));
+            return Value.Equals(other?.GetValueAs(this.Unit));
         }
 
         /// <summary>
@@ -1061,8 +1102,8 @@ namespace UnitsNet
             if (tolerance < 0)
                 throw new ArgumentOutOfRangeException("tolerance", "Tolerance must be greater than or equal to 0.");
 
-            double thisValue = (double)this.Value;
-            double otherValueInThisUnits = other.As(this.Unit);
+            QuantityValue thisValue = this.Value;
+            QuantityValue otherValueInThisUnits = other.As(this.Unit);
 
             return UnitsNet.Comparison.Equals(thisValue, otherValueInThisUnits, tolerance, comparisonType);
         }
@@ -1084,17 +1125,17 @@ namespace UnitsNet
         ///     Convert to the unit representation <paramref name="unit" />.
         /// </summary>
         /// <returns>Value converted to the specified unit.</returns>
-        public double As(MassUnit unit)
+        public QuantityValue As(MassUnit unit)
         {
             if (Unit == unit)
-                return Convert.ToDouble(Value);
+                return Value;
 
             var converted = GetValueAs(unit);
-            return Convert.ToDouble(converted);
+            return converted;
         }
 
         /// <inheritdoc cref="IQuantity.As(UnitSystem)"/>
-        public double As(UnitSystem unitSystem)
+        public QuantityValue As(UnitSystem unitSystem)
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -1109,7 +1150,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        double IQuantity.As(Enum unit)
+        QuantityValue IQuantity.As(Enum unit)
         {
             if (!(unit is MassUnit unitAsMassUnit))
                 throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(MassUnit)} is supported.", nameof(unit));
@@ -1167,8 +1208,21 @@ namespace UnitsNet
             return ToUnit(unitAsMassUnit, DefaultConversionFunctions);
         }
 
+        /// <inheritdoc />
+        IQuantity IQuantity.ToUnit(Enum unit, UnitConverter unitConverter)
+        {
+            if (!(unit is MassUnit unitAsMassUnit))
+                throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(MassUnit)} is supported.", nameof(unit));
+
+            return ToUnit(unitAsMassUnit, unitConverter);
+        }
+
         /// <inheritdoc cref="IQuantity.ToUnit(UnitSystem)"/>
-        public Mass ToUnit(UnitSystem unitSystem)
+#if NET5_0_OR_GREATER
+        public override Mass ToUnit(UnitSystem unitSystem)
+#else
+        public override IQuantity ToUnit(UnitSystem unitSystem)
+#endif
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -1189,12 +1243,15 @@ namespace UnitsNet
         IQuantity<MassUnit> IQuantity<MassUnit>.ToUnit(MassUnit unit) => ToUnit(unit);
 
         /// <inheritdoc />
-        IQuantity<MassUnit> IQuantity<MassUnit>.ToUnit(UnitSystem unitSystem) => ToUnit(unitSystem);
+        IQuantity<MassUnit> IQuantity<MassUnit>.ToUnit(MassUnit unit, UnitConverter unitConverter) => ToUnit(unit, unitConverter);
 
-        private double GetValueAs(MassUnit unit)
+        /// <inheritdoc />
+        IQuantity<MassUnit> IQuantity<MassUnit>.ToUnit(UnitSystem unitSystem) => (IQuantity<MassUnit>)ToUnit(unitSystem);
+
+        private QuantityValue GetValueAs(MassUnit unit)
         {
             var converted = ToUnit(unit);
-            return (double)converted.Value;
+            return (QuantityValue)converted.Value;
         }
 
         #endregion
@@ -1215,43 +1272,9 @@ namespace UnitsNet
         /// </summary>
         /// <returns>String representation.</returns>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        public string ToString(IFormatProvider? provider)
+        public override string ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="significantDigitsAfterRadix">The number of significant digits after the radix point.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete(@"This method is deprecated and will be removed at a future release. Please use ToString(""s2"") or ToString(""s2"", provider) where 2 is an example of the number passed to significantDigitsAfterRadix.")]
-        public string ToString(IFormatProvider? provider, int significantDigitsAfterRadix)
-        {
-            var value = Convert.ToDouble(Value);
-            var format = UnitFormatter.GetFormat(value, significantDigitsAfterRadix);
-            return ToString(provider, format);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="format">String format to use. Default:  "{0:0.##} {1} for value and unit abbreviation respectively."</param>
-        /// <param name="args">Arguments for string format. Value and unit are implicitly included as arguments 0 and 1.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete("This method is deprecated and will be removed at a future release. Please use string.Format().")]
-        public string ToString(IFormatProvider? provider, [NotNull] string format, [NotNull] params object[] args)
-        {
-            if (format == null) throw new ArgumentNullException(nameof(format));
-            if (args == null) throw new ArgumentNullException(nameof(args));
-
-            provider = provider ?? CultureInfo.CurrentUICulture;
-
-            var value = Convert.ToDouble(Value);
-            var formatArgs = UnitFormatter.GetFormatArgs(Unit, value, provider, args);
-            return string.Format(provider, format, formatArgs);
         }
 
         /// <inheritdoc cref="QuantityFormatter.Format{TUnitType}(IQuantity{TUnitType}, string, IFormatProvider)"/>
@@ -1272,7 +1295,7 @@ namespace UnitsNet
         /// <param name="format">The format string.</param>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
         /// <returns>The string representation.</returns>
-        public string ToString(string format, IFormatProvider? provider)
+        public override string ToString(string? format, IFormatProvider? provider)
         {
             return QuantityFormatter.Format<MassUnit>(this, format, provider);
         }
@@ -1286,95 +1309,93 @@ namespace UnitsNet
             return TypeCode.Object;
         }
 
-        bool IConvertible.ToBoolean(IFormatProvider provider)
+        bool IConvertible.ToBoolean(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Mass)} to bool is not supported.");
         }
 
-        byte IConvertible.ToByte(IFormatProvider provider)
+        byte IConvertible.ToByte(IFormatProvider? provider)
         {
-            return Convert.ToByte(_value);
+            return Convert.ToByte(Value);
         }
 
-        char IConvertible.ToChar(IFormatProvider provider)
+        char IConvertible.ToChar(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Mass)} to char is not supported.");
         }
 
-        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        DateTime IConvertible.ToDateTime(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Mass)} to DateTime is not supported.");
         }
 
-        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        decimal IConvertible.ToDecimal(IFormatProvider? provider)
         {
-            return Convert.ToDecimal(_value);
+            return Convert.ToDecimal(Value);
         }
 
-        double IConvertible.ToDouble(IFormatProvider provider)
+        double IConvertible.ToDouble(IFormatProvider? provider)
         {
-            return Convert.ToDouble(_value);
+            return Convert.ToDouble(Value);
         }
 
-        short IConvertible.ToInt16(IFormatProvider provider)
+        short IConvertible.ToInt16(IFormatProvider? provider)
         {
-            return Convert.ToInt16(_value);
+            return Convert.ToInt16(Value);
         }
 
-        int IConvertible.ToInt32(IFormatProvider provider)
+        int IConvertible.ToInt32(IFormatProvider? provider)
         {
-            return Convert.ToInt32(_value);
+            return Convert.ToInt32(Value);
         }
 
-        long IConvertible.ToInt64(IFormatProvider provider)
+        long IConvertible.ToInt64(IFormatProvider? provider)
         {
-            return Convert.ToInt64(_value);
+            return Convert.ToInt64(Value);
         }
 
-        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        sbyte IConvertible.ToSByte(IFormatProvider? provider)
         {
-            return Convert.ToSByte(_value);
+            return Convert.ToSByte(Value);
         }
 
-        float IConvertible.ToSingle(IFormatProvider provider)
+        float IConvertible.ToSingle(IFormatProvider? provider)
         {
-            return Convert.ToSingle(_value);
+            return Convert.ToSingle(Value);
         }
 
-        string IConvertible.ToString(IFormatProvider provider)
+        string IConvertible.ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
         }
 
-        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        object IConvertible.ToType(Type conversionType, IFormatProvider? provider)
         {
             if (conversionType == typeof(Mass))
                 return this;
             else if (conversionType == typeof(MassUnit))
                 return Unit;
-            else if (conversionType == typeof(QuantityType))
-                return Mass.QuantityType;
             else if (conversionType == typeof(QuantityInfo))
                 return Mass.Info;
-            else if (conversionType == typeof(BaseDimensions))
+            else if (conversionType == typeof(Dimensions))
                 return Mass.BaseDimensions;
             else
                 throw new InvalidCastException($"Converting {typeof(Mass)} to {conversionType} is not supported.");
         }
 
-        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        ushort IConvertible.ToUInt16(IFormatProvider? provider)
         {
-            return Convert.ToUInt16(_value);
+            return Convert.ToUInt16(Value);
         }
 
-        uint IConvertible.ToUInt32(IFormatProvider provider)
+        uint IConvertible.ToUInt32(IFormatProvider? provider)
         {
-            return Convert.ToUInt32(_value);
+            return Convert.ToUInt32(Value);
         }
 
-        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        ulong IConvertible.ToUInt64(IFormatProvider? provider)
         {
-            return Convert.ToUInt64(_value);
+            return Convert.ToUInt64(Value);
         }
 
         #endregion

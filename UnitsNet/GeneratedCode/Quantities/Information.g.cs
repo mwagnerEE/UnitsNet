@@ -21,8 +21,12 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Collections.Generic;
+using Fractions;
 using JetBrains.Annotations;
 using UnitsNet.InternalHelpers;
+using System.Numerics;
 using UnitsNet.Units;
 
 #nullable enable
@@ -36,14 +40,8 @@ namespace UnitsNet
     ///     In computing and telecommunications, a unit of information is the capacity of some standard data storage system or communication channel, used to measure the capacities of other systems and channels. In information theory, units of information are also used to measure the information contents or entropy of random variables.
     /// </summary>
     [DataContract]
-    public partial struct Information : IQuantity<InformationUnit>, IDecimalQuantity, IEquatable<Information>, IComparable, IComparable<Information>, IConvertible, IFormattable
+    public partial class Information :  QuantityBase, IQuantity<InformationUnit>, IEquatable<Information>, IComparable, IComparable<Information>, IConvertible, IArithmetic, IFormattable
     {
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        [DataMember(Name = "Value", Order = 0)]
-        private readonly decimal _value;
-
         /// <summary>
         ///     The unit this quantity was constructed with.
         /// </summary>
@@ -52,11 +50,11 @@ namespace UnitsNet
 
         static Information()
         {
-            BaseDimensions = BaseDimensions.Dimensionless;
+            BaseDimensions = new Dimensions(new Dictionary<Dimension, Fraction>()
+            {
+            {Dimension.Data, 1 },
+            });
             BaseUnit = InformationUnit.Bit;
-            MaxValue = new Information(decimal.MaxValue, BaseUnit);
-            MinValue = new Information(decimal.MinValue, BaseUnit);
-            QuantityType = QuantityType.Information;
             Units = Enum.GetValues(typeof(InformationUnit)).Cast<InformationUnit>().Except(new InformationUnit[]{ InformationUnit.Undefined }).ToArray();
             Zero = new Information(0, BaseUnit);
             Info = new QuantityInfo<InformationUnit>("Information",
@@ -89,10 +87,61 @@ namespace UnitsNet
                     new UnitInfo<InformationUnit>(InformationUnit.Terabit, "Terabits", BaseUnits.Undefined),
                     new UnitInfo<InformationUnit>(InformationUnit.Terabyte, "Terabytes", BaseUnits.Undefined),
                 },
-                BaseUnit, Zero, BaseDimensions, QuantityType.Information);
+                BaseUnit, Zero, BaseDimensions);
 
             DefaultConversionFunctions = new UnitConverter();
+
             RegisterDefaultConversions(DefaultConversionFunctions);
+        }
+
+#if NET6_0_OR_GREATER
+        /// <inheritdoc/>
+        [RequiresPreviewFeatures]
+        public static IQuantity Construct(QuantityValue value, Enum unit) => new Information((QuantityValue)value, (InformationUnit)unit);
+#endif
+
+        /// <summary>
+        ///     Creates the quantity with the a value of zero.
+        /// </summary>
+        public Information() : this(0, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Information(QuantityValue value) : this(value, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Information(double value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Information(Complex value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public new static IQuantity FromBaseUnits(QuantityValue value)
+        {
+            return new Information(value);
         }
 
         /// <summary>
@@ -101,12 +150,11 @@ namespace UnitsNet
         /// <param name="value">The numeric value to construct this quantity with.</param>
         /// <param name="unit">The unit representation to construct this quantity with.</param>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
-        public Information(decimal value, InformationUnit unit)
+        public Information(QuantityValue value, InformationUnit unit) : base(value, BaseDimensions)
         {
             if (unit == InformationUnit.Undefined)
               throw new ArgumentException("The quantity can not be created with an undefined unit.", nameof(unit));
 
-            _value = value;
             _unit = unit;
         }
 
@@ -118,14 +166,13 @@ namespace UnitsNet
         /// <param name="unitSystem">The unit system to create the quantity with.</param>
         /// <exception cref="ArgumentNullException">The given <see cref="UnitSystem"/> is null.</exception>
         /// <exception cref="ArgumentException">No unit was found for the given <see cref="UnitSystem"/>.</exception>
-        public Information(decimal value, UnitSystem unitSystem)
+        public Information(QuantityValue value, UnitSystem unitSystem) : base(value, BaseDimensions)
         {
             if (unitSystem is null) throw new ArgumentNullException(nameof(unitSystem));
 
             var unitInfos = Info.GetUnitInfosFor(unitSystem.BaseUnits);
             var firstUnitInfo = unitInfos.FirstOrDefault();
 
-            _value = value;
             _unit = firstUnitInfo?.Value ?? throw new ArgumentException("No units were found for the given UnitSystem.", nameof(unitSystem));
         }
 
@@ -140,32 +187,14 @@ namespace UnitsNet
         public static QuantityInfo<InformationUnit> Info { get; }
 
         /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
+        ///     The <see cref="Dimensions" /> of this quantity.
         /// </summary>
-        public static BaseDimensions BaseDimensions { get; }
+        public static Dimensions BaseDimensions { get; }
 
         /// <summary>
         ///     The base unit of Information, which is Bit. All conversions go via this value.
         /// </summary>
         public static InformationUnit BaseUnit { get; }
-
-        /// <summary>
-        /// Represents the largest possible value of Information
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Information MaxValue { get; }
-
-        /// <summary>
-        /// Represents the smallest possible value of Information
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Information MinValue { get; }
-
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public static QuantityType QuantityType { get; }
 
         /// <summary>
         ///     All units of measurement for the Information quantity.
@@ -181,37 +210,20 @@ namespace UnitsNet
 
         #region Properties
 
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        public decimal Value => _value;
-
-        double IQuantity.Value => (double) _value;
-
-        /// <inheritdoc cref="IDecimalQuantity.Value"/>
-        decimal IDecimalQuantity.Value => _value;
-
         Enum IQuantity.Unit => Unit;
+
+        /// <inheritdoc />
+        public override QuantityValue InBaseUnits => As(BaseUnit);
 
         /// <inheritdoc />
         public InformationUnit Unit => _unit.GetValueOrDefault(BaseUnit);
 
         /// <inheritdoc />
-        public QuantityInfo<InformationUnit> QuantityInfo => Info;
+        public new QuantityInfo<InformationUnit> QuantityInfo => Info;
 
         /// <inheritdoc cref="IQuantity.QuantityInfo"/>
         QuantityInfo IQuantity.QuantityInfo => Info;
 
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public QuantityType Type => QuantityType.Information;
-
-        /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
-        /// </summary>
-        public BaseDimensions Dimensions => Information.BaseDimensions;
 
         #endregion
 
@@ -220,132 +232,132 @@ namespace UnitsNet
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Bit"/>
         /// </summary>
-        public double Bits => As(InformationUnit.Bit);
+        public QuantityValue Bits => As(InformationUnit.Bit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Byte"/>
         /// </summary>
-        public double Bytes => As(InformationUnit.Byte);
+        public QuantityValue Bytes => As(InformationUnit.Byte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Exabit"/>
         /// </summary>
-        public double Exabits => As(InformationUnit.Exabit);
+        public QuantityValue Exabits => As(InformationUnit.Exabit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Exabyte"/>
         /// </summary>
-        public double Exabytes => As(InformationUnit.Exabyte);
+        public QuantityValue Exabytes => As(InformationUnit.Exabyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Exbibit"/>
         /// </summary>
-        public double Exbibits => As(InformationUnit.Exbibit);
+        public QuantityValue Exbibits => As(InformationUnit.Exbibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Exbibyte"/>
         /// </summary>
-        public double Exbibytes => As(InformationUnit.Exbibyte);
+        public QuantityValue Exbibytes => As(InformationUnit.Exbibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Gibibit"/>
         /// </summary>
-        public double Gibibits => As(InformationUnit.Gibibit);
+        public QuantityValue Gibibits => As(InformationUnit.Gibibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Gibibyte"/>
         /// </summary>
-        public double Gibibytes => As(InformationUnit.Gibibyte);
+        public QuantityValue Gibibytes => As(InformationUnit.Gibibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Gigabit"/>
         /// </summary>
-        public double Gigabits => As(InformationUnit.Gigabit);
+        public QuantityValue Gigabits => As(InformationUnit.Gigabit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Gigabyte"/>
         /// </summary>
-        public double Gigabytes => As(InformationUnit.Gigabyte);
+        public QuantityValue Gigabytes => As(InformationUnit.Gigabyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Kibibit"/>
         /// </summary>
-        public double Kibibits => As(InformationUnit.Kibibit);
+        public QuantityValue Kibibits => As(InformationUnit.Kibibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Kibibyte"/>
         /// </summary>
-        public double Kibibytes => As(InformationUnit.Kibibyte);
+        public QuantityValue Kibibytes => As(InformationUnit.Kibibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Kilobit"/>
         /// </summary>
-        public double Kilobits => As(InformationUnit.Kilobit);
+        public QuantityValue Kilobits => As(InformationUnit.Kilobit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Kilobyte"/>
         /// </summary>
-        public double Kilobytes => As(InformationUnit.Kilobyte);
+        public QuantityValue Kilobytes => As(InformationUnit.Kilobyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Mebibit"/>
         /// </summary>
-        public double Mebibits => As(InformationUnit.Mebibit);
+        public QuantityValue Mebibits => As(InformationUnit.Mebibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Mebibyte"/>
         /// </summary>
-        public double Mebibytes => As(InformationUnit.Mebibyte);
+        public QuantityValue Mebibytes => As(InformationUnit.Mebibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Megabit"/>
         /// </summary>
-        public double Megabits => As(InformationUnit.Megabit);
+        public QuantityValue Megabits => As(InformationUnit.Megabit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Megabyte"/>
         /// </summary>
-        public double Megabytes => As(InformationUnit.Megabyte);
+        public QuantityValue Megabytes => As(InformationUnit.Megabyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Pebibit"/>
         /// </summary>
-        public double Pebibits => As(InformationUnit.Pebibit);
+        public QuantityValue Pebibits => As(InformationUnit.Pebibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Pebibyte"/>
         /// </summary>
-        public double Pebibytes => As(InformationUnit.Pebibyte);
+        public QuantityValue Pebibytes => As(InformationUnit.Pebibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Petabit"/>
         /// </summary>
-        public double Petabits => As(InformationUnit.Petabit);
+        public QuantityValue Petabits => As(InformationUnit.Petabit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Petabyte"/>
         /// </summary>
-        public double Petabytes => As(InformationUnit.Petabyte);
+        public QuantityValue Petabytes => As(InformationUnit.Petabyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Tebibit"/>
         /// </summary>
-        public double Tebibits => As(InformationUnit.Tebibit);
+        public QuantityValue Tebibits => As(InformationUnit.Tebibit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Tebibyte"/>
         /// </summary>
-        public double Tebibytes => As(InformationUnit.Tebibyte);
+        public QuantityValue Tebibytes => As(InformationUnit.Tebibyte);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Terabit"/>
         /// </summary>
-        public double Terabits => As(InformationUnit.Terabit);
+        public QuantityValue Terabits => As(InformationUnit.Terabit);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="InformationUnit.Terabyte"/>
         /// </summary>
-        public double Terabytes => As(InformationUnit.Terabyte);
+        public QuantityValue Terabytes => As(InformationUnit.Terabyte);
 
         #endregion
 
@@ -383,7 +395,6 @@ namespace UnitsNet
             unitConverter.SetConversionFunction<Information>(InformationUnit.Bit, InformationUnit.Tebibyte, quantity => new Information((quantity.Value / 8m) / (1024m * 1024 * 1024 * 1024), InformationUnit.Tebibyte));
             unitConverter.SetConversionFunction<Information>(InformationUnit.Bit, InformationUnit.Terabit, quantity => new Information((quantity.Value) / 1e12m, InformationUnit.Terabit));
             unitConverter.SetConversionFunction<Information>(InformationUnit.Bit, InformationUnit.Terabyte, quantity => new Information((quantity.Value / 8m) / 1e12m, InformationUnit.Terabyte));
-
             // Register in unit converter: BaseUnit <-> BaseUnit
             unitConverter.SetConversionFunction<Information>(InformationUnit.Bit, InformationUnit.Bit, quantity => quantity);
 
@@ -476,257 +487,232 @@ namespace UnitsNet
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromBits(QuantityValue bits)
         {
-            decimal value = (decimal) bits;
+            QuantityValue value = (QuantityValue) bits;
             return new Information(value, InformationUnit.Bit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Byte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromBytes(QuantityValue bytes)
         {
-            decimal value = (decimal) bytes;
+            QuantityValue value = (QuantityValue) bytes;
             return new Information(value, InformationUnit.Byte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Exabit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromExabits(QuantityValue exabits)
         {
-            decimal value = (decimal) exabits;
+            QuantityValue value = (QuantityValue) exabits;
             return new Information(value, InformationUnit.Exabit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Exabyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromExabytes(QuantityValue exabytes)
         {
-            decimal value = (decimal) exabytes;
+            QuantityValue value = (QuantityValue) exabytes;
             return new Information(value, InformationUnit.Exabyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Exbibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromExbibits(QuantityValue exbibits)
         {
-            decimal value = (decimal) exbibits;
+            QuantityValue value = (QuantityValue) exbibits;
             return new Information(value, InformationUnit.Exbibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Exbibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromExbibytes(QuantityValue exbibytes)
         {
-            decimal value = (decimal) exbibytes;
+            QuantityValue value = (QuantityValue) exbibytes;
             return new Information(value, InformationUnit.Exbibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Gibibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromGibibits(QuantityValue gibibits)
         {
-            decimal value = (decimal) gibibits;
+            QuantityValue value = (QuantityValue) gibibits;
             return new Information(value, InformationUnit.Gibibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Gibibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromGibibytes(QuantityValue gibibytes)
         {
-            decimal value = (decimal) gibibytes;
+            QuantityValue value = (QuantityValue) gibibytes;
             return new Information(value, InformationUnit.Gibibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Gigabit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromGigabits(QuantityValue gigabits)
         {
-            decimal value = (decimal) gigabits;
+            QuantityValue value = (QuantityValue) gigabits;
             return new Information(value, InformationUnit.Gigabit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Gigabyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromGigabytes(QuantityValue gigabytes)
         {
-            decimal value = (decimal) gigabytes;
+            QuantityValue value = (QuantityValue) gigabytes;
             return new Information(value, InformationUnit.Gigabyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Kibibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromKibibits(QuantityValue kibibits)
         {
-            decimal value = (decimal) kibibits;
+            QuantityValue value = (QuantityValue) kibibits;
             return new Information(value, InformationUnit.Kibibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Kibibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromKibibytes(QuantityValue kibibytes)
         {
-            decimal value = (decimal) kibibytes;
+            QuantityValue value = (QuantityValue) kibibytes;
             return new Information(value, InformationUnit.Kibibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Kilobit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromKilobits(QuantityValue kilobits)
         {
-            decimal value = (decimal) kilobits;
+            QuantityValue value = (QuantityValue) kilobits;
             return new Information(value, InformationUnit.Kilobit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Kilobyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromKilobytes(QuantityValue kilobytes)
         {
-            decimal value = (decimal) kilobytes;
+            QuantityValue value = (QuantityValue) kilobytes;
             return new Information(value, InformationUnit.Kilobyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Mebibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromMebibits(QuantityValue mebibits)
         {
-            decimal value = (decimal) mebibits;
+            QuantityValue value = (QuantityValue) mebibits;
             return new Information(value, InformationUnit.Mebibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Mebibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromMebibytes(QuantityValue mebibytes)
         {
-            decimal value = (decimal) mebibytes;
+            QuantityValue value = (QuantityValue) mebibytes;
             return new Information(value, InformationUnit.Mebibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Megabit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromMegabits(QuantityValue megabits)
         {
-            decimal value = (decimal) megabits;
+            QuantityValue value = (QuantityValue) megabits;
             return new Information(value, InformationUnit.Megabit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Megabyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromMegabytes(QuantityValue megabytes)
         {
-            decimal value = (decimal) megabytes;
+            QuantityValue value = (QuantityValue) megabytes;
             return new Information(value, InformationUnit.Megabyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Pebibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromPebibits(QuantityValue pebibits)
         {
-            decimal value = (decimal) pebibits;
+            QuantityValue value = (QuantityValue) pebibits;
             return new Information(value, InformationUnit.Pebibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Pebibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromPebibytes(QuantityValue pebibytes)
         {
-            decimal value = (decimal) pebibytes;
+            QuantityValue value = (QuantityValue) pebibytes;
             return new Information(value, InformationUnit.Pebibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Petabit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromPetabits(QuantityValue petabits)
         {
-            decimal value = (decimal) petabits;
+            QuantityValue value = (QuantityValue) petabits;
             return new Information(value, InformationUnit.Petabit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Petabyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromPetabytes(QuantityValue petabytes)
         {
-            decimal value = (decimal) petabytes;
+            QuantityValue value = (QuantityValue) petabytes;
             return new Information(value, InformationUnit.Petabyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Tebibit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromTebibits(QuantityValue tebibits)
         {
-            decimal value = (decimal) tebibits;
+            QuantityValue value = (QuantityValue) tebibits;
             return new Information(value, InformationUnit.Tebibit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Tebibyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromTebibytes(QuantityValue tebibytes)
         {
-            decimal value = (decimal) tebibytes;
+            QuantityValue value = (QuantityValue) tebibytes;
             return new Information(value, InformationUnit.Tebibyte);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Terabit"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromTerabits(QuantityValue terabits)
         {
-            decimal value = (decimal) terabits;
+            QuantityValue value = (QuantityValue) terabits;
             return new Information(value, InformationUnit.Terabit);
         }
-
         /// <summary>
         ///     Creates a <see cref="Information"/> from <see cref="InformationUnit.Terabyte"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Information FromTerabytes(QuantityValue terabytes)
         {
-            decimal value = (decimal) terabytes;
+            QuantityValue value = (QuantityValue) terabytes;
             return new Information(value, InformationUnit.Terabyte);
         }
 
@@ -738,7 +724,7 @@ namespace UnitsNet
         /// <returns>Information unit value.</returns>
         public static Information From(QuantityValue value, InformationUnit fromUnit)
         {
-            return new Information((decimal)value, fromUnit);
+            return new Information((QuantityValue)value, fromUnit);
         }
 
         #endregion
@@ -908,28 +894,65 @@ namespace UnitsNet
         }
 
         /// <summary>Get <see cref="Information"/> from multiplying value and <see cref="Information"/>.</summary>
-        public static Information operator *(decimal left, Information right)
+        public static Information operator *(QuantityValue left, Information right)
         {
             return new Information(left * right.Value, right.Unit);
         }
 
         /// <summary>Get <see cref="Information"/> from multiplying value and <see cref="Information"/>.</summary>
-        public static Information operator *(Information left, decimal right)
+        public static Information operator *(Information left, QuantityValue right)
         {
             return new Information(left.Value * right, left.Unit);
         }
 
         /// <summary>Get <see cref="Information"/> from dividing <see cref="Information"/> by value.</summary>
-        public static Information operator /(Information left, decimal right)
+        public static Information operator /(Information left, QuantityValue right)
         {
             return new Information(left.Value / right, left.Unit);
         }
 
         /// <summary>Get ratio value from dividing <see cref="Information"/> by <see cref="Information"/>.</summary>
-        public static double operator /(Information left, Information right)
+        public static QuantityValue operator /(Information left, Information right)
         {
             return left.Bits / right.Bits;
         }
+
+        /// <summary>Negate the <see cref="Information"/>.</summary>
+        public new Information Negate()
+        {
+            return new Information(-this.Value, this.Unit);
+        }
+
+        /// <summary>Add two <see cref="Information"/> together</summary>
+        public Information Add(Information other)
+        {
+            return new Information(this.Value + other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Subtract one <see cref="Information"/> from another</summary>
+        public Information Subtract(Information other)
+        {
+            return new Information(this.Value - other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Scale the <see cref="Information"/> by a constant</summary>
+        public new Information Scale(double scaleFactor)
+        {
+            return new Information(scaleFactor * this.Value, this.Unit);
+        }
+
+
+        /// <summary>Negate the <see cref="Information"/>.</summary>
+        IQuantity IArithmetic.Negate() => Negate();
+
+        /// <summary>Add two <see cref="Information"/> together</summary>
+        IQuantity IArithmetic.Add(IQuantity other) => Add((Information)other);
+
+        /// <summary>Subtract one <see cref="Information"/> from another</summary>
+        IQuantity IArithmetic.Subtract(IQuantity other) => Subtract((Information)other);
+
+        /// <summary>Scale the <see cref="Information"/> by a constant</summary>
+        IQuantity IArithmetic.Scale(double scaleFactor) => Scale(scaleFactor);
 
         #endregion
 
@@ -963,7 +986,15 @@ namespace UnitsNet
         /// <remarks>Consider using <see cref="Equals(Information, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
         public static bool operator ==(Information left, Information right)
         {
-            return left.Equals(right);
+            if(left is null ^ right is null)
+            {
+                return false;
+            }
+            else if(left is null && right is null)
+            {
+                return true;
+            }
+            return left!.Equals(right);
         }
 
         /// <summary>Returns true if not exactly equal.</summary>
@@ -974,7 +1005,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(object obj)
+        public new int CompareTo(object? obj)
         {
             if (obj is null) throw new ArgumentNullException(nameof(obj));
             if (!(obj is Information objInformation)) throw new ArgumentException("Expected type Information.", nameof(obj));
@@ -983,14 +1014,18 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(Information other)
+        public int CompareTo(Information? other)
         {
-            return _value.CompareTo(other.GetValueAs(this.Unit));
+            if(other is Information otherInformation)
+            {
+                return Value.CompareTo(otherInformation.GetValueAs(this.Unit));
+            }
+            return 1; //Any value is greater than null
         }
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Information, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null || !(obj is Information objInformation))
                 return false;
@@ -1000,9 +1035,9 @@ namespace UnitsNet
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Information, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public bool Equals(Information other)
+        public bool Equals(Information? other)
         {
-            return _value.Equals(other.GetValueAs(this.Unit));
+            return Value.Equals(other?.GetValueAs(this.Unit));
         }
 
         /// <summary>
@@ -1050,8 +1085,8 @@ namespace UnitsNet
             if (tolerance < 0)
                 throw new ArgumentOutOfRangeException("tolerance", "Tolerance must be greater than or equal to 0.");
 
-            double thisValue = (double)this.Value;
-            double otherValueInThisUnits = other.As(this.Unit);
+            QuantityValue thisValue = this.Value;
+            QuantityValue otherValueInThisUnits = other.As(this.Unit);
 
             return UnitsNet.Comparison.Equals(thisValue, otherValueInThisUnits, tolerance, comparisonType);
         }
@@ -1073,17 +1108,17 @@ namespace UnitsNet
         ///     Convert to the unit representation <paramref name="unit" />.
         /// </summary>
         /// <returns>Value converted to the specified unit.</returns>
-        public double As(InformationUnit unit)
+        public QuantityValue As(InformationUnit unit)
         {
             if (Unit == unit)
-                return Convert.ToDouble(Value);
+                return Value;
 
             var converted = GetValueAs(unit);
-            return Convert.ToDouble(converted);
+            return converted;
         }
 
         /// <inheritdoc cref="IQuantity.As(UnitSystem)"/>
-        public double As(UnitSystem unitSystem)
+        public QuantityValue As(UnitSystem unitSystem)
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -1098,7 +1133,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        double IQuantity.As(Enum unit)
+        QuantityValue IQuantity.As(Enum unit)
         {
             if (!(unit is InformationUnit unitAsInformationUnit))
                 throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(InformationUnit)} is supported.", nameof(unit));
@@ -1156,8 +1191,21 @@ namespace UnitsNet
             return ToUnit(unitAsInformationUnit, DefaultConversionFunctions);
         }
 
+        /// <inheritdoc />
+        IQuantity IQuantity.ToUnit(Enum unit, UnitConverter unitConverter)
+        {
+            if (!(unit is InformationUnit unitAsInformationUnit))
+                throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(InformationUnit)} is supported.", nameof(unit));
+
+            return ToUnit(unitAsInformationUnit, unitConverter);
+        }
+
         /// <inheritdoc cref="IQuantity.ToUnit(UnitSystem)"/>
-        public Information ToUnit(UnitSystem unitSystem)
+#if NET5_0_OR_GREATER
+        public override Information ToUnit(UnitSystem unitSystem)
+#else
+        public override IQuantity ToUnit(UnitSystem unitSystem)
+#endif
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -1178,12 +1226,15 @@ namespace UnitsNet
         IQuantity<InformationUnit> IQuantity<InformationUnit>.ToUnit(InformationUnit unit) => ToUnit(unit);
 
         /// <inheritdoc />
-        IQuantity<InformationUnit> IQuantity<InformationUnit>.ToUnit(UnitSystem unitSystem) => ToUnit(unitSystem);
+        IQuantity<InformationUnit> IQuantity<InformationUnit>.ToUnit(InformationUnit unit, UnitConverter unitConverter) => ToUnit(unit, unitConverter);
 
-        private decimal GetValueAs(InformationUnit unit)
+        /// <inheritdoc />
+        IQuantity<InformationUnit> IQuantity<InformationUnit>.ToUnit(UnitSystem unitSystem) => (IQuantity<InformationUnit>)ToUnit(unitSystem);
+
+        private QuantityValue GetValueAs(InformationUnit unit)
         {
             var converted = ToUnit(unit);
-            return (decimal)converted.Value;
+            return (QuantityValue)converted.Value;
         }
 
         #endregion
@@ -1204,43 +1255,9 @@ namespace UnitsNet
         /// </summary>
         /// <returns>String representation.</returns>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        public string ToString(IFormatProvider? provider)
+        public override string ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="significantDigitsAfterRadix">The number of significant digits after the radix point.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete(@"This method is deprecated and will be removed at a future release. Please use ToString(""s2"") or ToString(""s2"", provider) where 2 is an example of the number passed to significantDigitsAfterRadix.")]
-        public string ToString(IFormatProvider? provider, int significantDigitsAfterRadix)
-        {
-            var value = Convert.ToDouble(Value);
-            var format = UnitFormatter.GetFormat(value, significantDigitsAfterRadix);
-            return ToString(provider, format);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="format">String format to use. Default:  "{0:0.##} {1} for value and unit abbreviation respectively."</param>
-        /// <param name="args">Arguments for string format. Value and unit are implicitly included as arguments 0 and 1.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete("This method is deprecated and will be removed at a future release. Please use string.Format().")]
-        public string ToString(IFormatProvider? provider, [NotNull] string format, [NotNull] params object[] args)
-        {
-            if (format == null) throw new ArgumentNullException(nameof(format));
-            if (args == null) throw new ArgumentNullException(nameof(args));
-
-            provider = provider ?? CultureInfo.CurrentUICulture;
-
-            var value = Convert.ToDouble(Value);
-            var formatArgs = UnitFormatter.GetFormatArgs(Unit, value, provider, args);
-            return string.Format(provider, format, formatArgs);
         }
 
         /// <inheritdoc cref="QuantityFormatter.Format{TUnitType}(IQuantity{TUnitType}, string, IFormatProvider)"/>
@@ -1261,7 +1278,7 @@ namespace UnitsNet
         /// <param name="format">The format string.</param>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
         /// <returns>The string representation.</returns>
-        public string ToString(string format, IFormatProvider? provider)
+        public override string ToString(string? format, IFormatProvider? provider)
         {
             return QuantityFormatter.Format<InformationUnit>(this, format, provider);
         }
@@ -1275,95 +1292,93 @@ namespace UnitsNet
             return TypeCode.Object;
         }
 
-        bool IConvertible.ToBoolean(IFormatProvider provider)
+        bool IConvertible.ToBoolean(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Information)} to bool is not supported.");
         }
 
-        byte IConvertible.ToByte(IFormatProvider provider)
+        byte IConvertible.ToByte(IFormatProvider? provider)
         {
-            return Convert.ToByte(_value);
+            return Convert.ToByte(Value);
         }
 
-        char IConvertible.ToChar(IFormatProvider provider)
+        char IConvertible.ToChar(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Information)} to char is not supported.");
         }
 
-        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        DateTime IConvertible.ToDateTime(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Information)} to DateTime is not supported.");
         }
 
-        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        decimal IConvertible.ToDecimal(IFormatProvider? provider)
         {
-            return Convert.ToDecimal(_value);
+            return Convert.ToDecimal(Value);
         }
 
-        double IConvertible.ToDouble(IFormatProvider provider)
+        double IConvertible.ToDouble(IFormatProvider? provider)
         {
-            return Convert.ToDouble(_value);
+            return Convert.ToDouble(Value);
         }
 
-        short IConvertible.ToInt16(IFormatProvider provider)
+        short IConvertible.ToInt16(IFormatProvider? provider)
         {
-            return Convert.ToInt16(_value);
+            return Convert.ToInt16(Value);
         }
 
-        int IConvertible.ToInt32(IFormatProvider provider)
+        int IConvertible.ToInt32(IFormatProvider? provider)
         {
-            return Convert.ToInt32(_value);
+            return Convert.ToInt32(Value);
         }
 
-        long IConvertible.ToInt64(IFormatProvider provider)
+        long IConvertible.ToInt64(IFormatProvider? provider)
         {
-            return Convert.ToInt64(_value);
+            return Convert.ToInt64(Value);
         }
 
-        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        sbyte IConvertible.ToSByte(IFormatProvider? provider)
         {
-            return Convert.ToSByte(_value);
+            return Convert.ToSByte(Value);
         }
 
-        float IConvertible.ToSingle(IFormatProvider provider)
+        float IConvertible.ToSingle(IFormatProvider? provider)
         {
-            return Convert.ToSingle(_value);
+            return Convert.ToSingle(Value);
         }
 
-        string IConvertible.ToString(IFormatProvider provider)
+        string IConvertible.ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
         }
 
-        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        object IConvertible.ToType(Type conversionType, IFormatProvider? provider)
         {
             if (conversionType == typeof(Information))
                 return this;
             else if (conversionType == typeof(InformationUnit))
                 return Unit;
-            else if (conversionType == typeof(QuantityType))
-                return Information.QuantityType;
             else if (conversionType == typeof(QuantityInfo))
                 return Information.Info;
-            else if (conversionType == typeof(BaseDimensions))
+            else if (conversionType == typeof(Dimensions))
                 return Information.BaseDimensions;
             else
                 throw new InvalidCastException($"Converting {typeof(Information)} to {conversionType} is not supported.");
         }
 
-        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        ushort IConvertible.ToUInt16(IFormatProvider? provider)
         {
-            return Convert.ToUInt16(_value);
+            return Convert.ToUInt16(Value);
         }
 
-        uint IConvertible.ToUInt32(IFormatProvider provider)
+        uint IConvertible.ToUInt32(IFormatProvider? provider)
         {
-            return Convert.ToUInt32(_value);
+            return Convert.ToUInt32(Value);
         }
 
-        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        ulong IConvertible.ToUInt64(IFormatProvider? provider)
         {
-            return Convert.ToUInt64(_value);
+            return Convert.ToUInt64(Value);
         }
 
         #endregion

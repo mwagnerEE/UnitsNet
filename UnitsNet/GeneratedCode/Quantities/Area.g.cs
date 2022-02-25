@@ -21,8 +21,12 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Collections.Generic;
+using Fractions;
 using JetBrains.Annotations;
 using UnitsNet.InternalHelpers;
+using System.Numerics;
 using UnitsNet.Units;
 
 #nullable enable
@@ -36,14 +40,8 @@ namespace UnitsNet
     ///     Area is a quantity that expresses the extent of a two-dimensional surface or shape, or planar lamina, in the plane. Area can be understood as the amount of material with a given thickness that would be necessary to fashion a model of the shape, or the amount of paint necessary to cover the surface with a single coat.[1] It is the two-dimensional analog of the length of a curve (a one-dimensional concept) or the volume of a solid (a three-dimensional concept).
     /// </summary>
     [DataContract]
-    public partial struct Area : IQuantity<AreaUnit>, IEquatable<Area>, IComparable, IComparable<Area>, IConvertible, IFormattable
+    public partial class Area :  QuantityBase, IQuantity<AreaUnit>, IEquatable<Area>, IComparable, IComparable<Area>, IConvertible, IArithmetic, IFormattable
     {
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        [DataMember(Name = "Value", Order = 0)]
-        private readonly double _value;
-
         /// <summary>
         ///     The unit this quantity was constructed with.
         /// </summary>
@@ -52,18 +50,21 @@ namespace UnitsNet
 
         static Area()
         {
-            BaseDimensions = new BaseDimensions(2, 0, 0, 0, 0, 0, 0);
+            BaseDimensions = new Dimensions(new Dictionary<Dimension, Fraction>()
+            {
+            {Dimension.Length, 2 },
+            });
             BaseUnit = AreaUnit.SquareMeter;
-            MaxValue = new Area(double.MaxValue, BaseUnit);
-            MinValue = new Area(double.MinValue, BaseUnit);
-            QuantityType = QuantityType.Area;
             Units = Enum.GetValues(typeof(AreaUnit)).Cast<AreaUnit>().Except(new AreaUnit[]{ AreaUnit.Undefined }).ToArray();
             Zero = new Area(0, BaseUnit);
             Info = new QuantityInfo<AreaUnit>("Area",
                 new UnitInfo<AreaUnit>[]
                 {
                     new UnitInfo<AreaUnit>(AreaUnit.Acre, "Acres", BaseUnits.Undefined),
+                    new UnitInfo<AreaUnit>(AreaUnit.AWG, "AWG", BaseUnits.Undefined),
+                    new UnitInfo<AreaUnit>(AreaUnit.CircularMil, "CircularMils", new BaseUnits(length: LengthUnit.Mil)),
                     new UnitInfo<AreaUnit>(AreaUnit.Hectare, "Hectares", BaseUnits.Undefined),
+                    new UnitInfo<AreaUnit>(AreaUnit.KilocircularMil, "KilocircularMils", BaseUnits.Undefined),
                     new UnitInfo<AreaUnit>(AreaUnit.SquareCentimeter, "SquareCentimeters", new BaseUnits(length: LengthUnit.Centimeter)),
                     new UnitInfo<AreaUnit>(AreaUnit.SquareDecimeter, "SquareDecimeters", new BaseUnits(length: LengthUnit.Decimeter)),
                     new UnitInfo<AreaUnit>(AreaUnit.SquareFoot, "SquareFeet", new BaseUnits(length: LengthUnit.Foot)),
@@ -77,10 +78,61 @@ namespace UnitsNet
                     new UnitInfo<AreaUnit>(AreaUnit.SquareYard, "SquareYards", new BaseUnits(length: LengthUnit.Yard)),
                     new UnitInfo<AreaUnit>(AreaUnit.UsSurveySquareFoot, "UsSurveySquareFeet", new BaseUnits(length: LengthUnit.UsSurveyFoot)),
                 },
-                BaseUnit, Zero, BaseDimensions, QuantityType.Area);
+                BaseUnit, Zero, BaseDimensions);
 
             DefaultConversionFunctions = new UnitConverter();
+
             RegisterDefaultConversions(DefaultConversionFunctions);
+        }
+
+#if NET6_0_OR_GREATER
+        /// <inheritdoc/>
+        [RequiresPreviewFeatures]
+        public static IQuantity Construct(QuantityValue value, Enum unit) => new Area((QuantityValue)value, (AreaUnit)unit);
+#endif
+
+        /// <summary>
+        ///     Creates the quantity with the a value of zero.
+        /// </summary>
+        public Area() : this(0, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Area(QuantityValue value) : this(value, BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Area(double value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public Area(Complex value) : this(new QuantityValue(value), BaseUnit)
+        {
+        }
+
+        /// <summary>
+        ///     Creates the quantity with the given numeric value and base units.
+        /// </summary>
+        /// <param name="value">The numeric value to construct this quantity with.</param>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public new static IQuantity FromBaseUnits(QuantityValue value)
+        {
+            return new Area(value);
         }
 
         /// <summary>
@@ -89,12 +141,11 @@ namespace UnitsNet
         /// <param name="value">The numeric value to construct this quantity with.</param>
         /// <param name="unit">The unit representation to construct this quantity with.</param>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
-        public Area(double value, AreaUnit unit)
+        public Area(QuantityValue value, AreaUnit unit) : base(value, BaseDimensions)
         {
             if (unit == AreaUnit.Undefined)
               throw new ArgumentException("The quantity can not be created with an undefined unit.", nameof(unit));
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = unit;
         }
 
@@ -106,14 +157,13 @@ namespace UnitsNet
         /// <param name="unitSystem">The unit system to create the quantity with.</param>
         /// <exception cref="ArgumentNullException">The given <see cref="UnitSystem"/> is null.</exception>
         /// <exception cref="ArgumentException">No unit was found for the given <see cref="UnitSystem"/>.</exception>
-        public Area(double value, UnitSystem unitSystem)
+        public Area(QuantityValue value, UnitSystem unitSystem) : base(value, BaseDimensions)
         {
             if (unitSystem is null) throw new ArgumentNullException(nameof(unitSystem));
 
             var unitInfos = Info.GetUnitInfosFor(unitSystem.BaseUnits);
             var firstUnitInfo = unitInfos.FirstOrDefault();
 
-            _value = Guard.EnsureValidNumber(value, nameof(value));
             _unit = firstUnitInfo?.Value ?? throw new ArgumentException("No units were found for the given UnitSystem.", nameof(unitSystem));
         }
 
@@ -128,32 +178,14 @@ namespace UnitsNet
         public static QuantityInfo<AreaUnit> Info { get; }
 
         /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
+        ///     The <see cref="Dimensions" /> of this quantity.
         /// </summary>
-        public static BaseDimensions BaseDimensions { get; }
+        public static Dimensions BaseDimensions { get; }
 
         /// <summary>
         ///     The base unit of Area, which is SquareMeter. All conversions go via this value.
         /// </summary>
         public static AreaUnit BaseUnit { get; }
-
-        /// <summary>
-        /// Represents the largest possible value of Area
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Area MaxValue { get; }
-
-        /// <summary>
-        /// Represents the smallest possible value of Area
-        /// </summary>
-        [Obsolete("MaxValue and MinValue will be removed. Choose your own value or use nullability for unbounded lower/upper range checks. See discussion in https://github.com/angularsen/UnitsNet/issues/848.")]
-        public static Area MinValue { get; }
-
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public static QuantityType QuantityType { get; }
 
         /// <summary>
         ///     All units of measurement for the Area quantity.
@@ -169,32 +201,20 @@ namespace UnitsNet
 
         #region Properties
 
-        /// <summary>
-        ///     The numeric value this quantity was constructed with.
-        /// </summary>
-        public double Value => _value;
-
         Enum IQuantity.Unit => Unit;
+
+        /// <inheritdoc />
+        public override QuantityValue InBaseUnits => As(BaseUnit);
 
         /// <inheritdoc />
         public AreaUnit Unit => _unit.GetValueOrDefault(BaseUnit);
 
         /// <inheritdoc />
-        public QuantityInfo<AreaUnit> QuantityInfo => Info;
+        public new QuantityInfo<AreaUnit> QuantityInfo => Info;
 
         /// <inheritdoc cref="IQuantity.QuantityInfo"/>
         QuantityInfo IQuantity.QuantityInfo => Info;
 
-        /// <summary>
-        ///     The <see cref="QuantityType" /> of this quantity.
-        /// </summary>
-        [Obsolete("QuantityType will be removed in the future. Use the Info property instead.")]
-        public QuantityType Type => QuantityType.Area;
-
-        /// <summary>
-        ///     The <see cref="BaseDimensions" /> of this quantity.
-        /// </summary>
-        public BaseDimensions Dimensions => Area.BaseDimensions;
 
         #endregion
 
@@ -203,72 +223,87 @@ namespace UnitsNet
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.Acre"/>
         /// </summary>
-        public double Acres => As(AreaUnit.Acre);
+        public QuantityValue Acres => As(AreaUnit.Acre);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.AWG"/>
+        /// </summary>
+        public QuantityValue AWG => As(AreaUnit.AWG);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.CircularMil"/>
+        /// </summary>
+        public QuantityValue CircularMils => As(AreaUnit.CircularMil);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.Hectare"/>
         /// </summary>
-        public double Hectares => As(AreaUnit.Hectare);
+        public QuantityValue Hectares => As(AreaUnit.Hectare);
+
+        /// <summary>
+        ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.KilocircularMil"/>
+        /// </summary>
+        public QuantityValue KilocircularMils => As(AreaUnit.KilocircularMil);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareCentimeter"/>
         /// </summary>
-        public double SquareCentimeters => As(AreaUnit.SquareCentimeter);
+        public QuantityValue SquareCentimeters => As(AreaUnit.SquareCentimeter);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareDecimeter"/>
         /// </summary>
-        public double SquareDecimeters => As(AreaUnit.SquareDecimeter);
+        public QuantityValue SquareDecimeters => As(AreaUnit.SquareDecimeter);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareFoot"/>
         /// </summary>
-        public double SquareFeet => As(AreaUnit.SquareFoot);
+        public QuantityValue SquareFeet => As(AreaUnit.SquareFoot);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareInch"/>
         /// </summary>
-        public double SquareInches => As(AreaUnit.SquareInch);
+        public QuantityValue SquareInches => As(AreaUnit.SquareInch);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareKilometer"/>
         /// </summary>
-        public double SquareKilometers => As(AreaUnit.SquareKilometer);
+        public QuantityValue SquareKilometers => As(AreaUnit.SquareKilometer);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareMeter"/>
         /// </summary>
-        public double SquareMeters => As(AreaUnit.SquareMeter);
+        public QuantityValue SquareMeters => As(AreaUnit.SquareMeter);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareMicrometer"/>
         /// </summary>
-        public double SquareMicrometers => As(AreaUnit.SquareMicrometer);
+        public QuantityValue SquareMicrometers => As(AreaUnit.SquareMicrometer);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareMile"/>
         /// </summary>
-        public double SquareMiles => As(AreaUnit.SquareMile);
+        public QuantityValue SquareMiles => As(AreaUnit.SquareMile);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareMillimeter"/>
         /// </summary>
-        public double SquareMillimeters => As(AreaUnit.SquareMillimeter);
+        public QuantityValue SquareMillimeters => As(AreaUnit.SquareMillimeter);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareNauticalMile"/>
         /// </summary>
-        public double SquareNauticalMiles => As(AreaUnit.SquareNauticalMile);
+        public QuantityValue SquareNauticalMiles => As(AreaUnit.SquareNauticalMile);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.SquareYard"/>
         /// </summary>
-        public double SquareYards => As(AreaUnit.SquareYard);
+        public QuantityValue SquareYards => As(AreaUnit.SquareYard);
 
         /// <summary>
         ///     Gets a <see cref="double"/> value of this quantity converted into <see cref="AreaUnit.UsSurveySquareFoot"/>
         /// </summary>
-        public double UsSurveySquareFeet => As(AreaUnit.UsSurveySquareFoot);
+        public QuantityValue UsSurveySquareFeet => As(AreaUnit.UsSurveySquareFoot);
 
         #endregion
 
@@ -282,7 +317,10 @@ namespace UnitsNet
         {
             // Register in unit converter: BaseUnit -> AreaUnit
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.Acre, quantity => new Area(quantity.Value / 4046.85642, AreaUnit.Acre));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.AWG, quantity => new Area(36 - (39 * QuantityValue.Log(quantity.Value / 1.2668E-8, 92)), AreaUnit.AWG));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.CircularMil, quantity => new Area(quantity.Value / 5.067e-10, AreaUnit.CircularMil));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.Hectare, quantity => new Area(quantity.Value / 1e4, AreaUnit.Hectare));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.KilocircularMil, quantity => new Area(quantity.Value / 5.067e-7, AreaUnit.KilocircularMil));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareCentimeter, quantity => new Area(quantity.Value / 1e-4, AreaUnit.SquareCentimeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareDecimeter, quantity => new Area(quantity.Value / 1e-2, AreaUnit.SquareDecimeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareFoot, quantity => new Area(quantity.Value / 9.290304e-2, AreaUnit.SquareFoot));
@@ -294,13 +332,15 @@ namespace UnitsNet
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareNauticalMile, quantity => new Area(quantity.Value / 3429904, AreaUnit.SquareNauticalMile));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareYard, quantity => new Area(quantity.Value / 0.836127, AreaUnit.SquareYard));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.UsSurveySquareFoot, quantity => new Area(quantity.Value / 0.09290341161, AreaUnit.UsSurveySquareFoot));
-
             // Register in unit converter: BaseUnit <-> BaseUnit
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareMeter, AreaUnit.SquareMeter, quantity => quantity);
 
             // Register in unit converter: AreaUnit -> BaseUnit
             unitConverter.SetConversionFunction<Area>(AreaUnit.Acre, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 4046.85642, AreaUnit.SquareMeter));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.AWG, AreaUnit.SquareMeter, quantity => new Area(1.2668E-8 * QuantityValue.Pow(92, (36 - quantity.Value) / 39), AreaUnit.SquareMeter));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.CircularMil, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 5.067e-10, AreaUnit.SquareMeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.Hectare, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 1e4, AreaUnit.SquareMeter));
+            unitConverter.SetConversionFunction<Area>(AreaUnit.KilocircularMil, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 5.067e-7, AreaUnit.SquareMeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareCentimeter, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 1e-4, AreaUnit.SquareMeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareDecimeter, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 1e-2, AreaUnit.SquareMeter));
             unitConverter.SetConversionFunction<Area>(AreaUnit.SquareFoot, AreaUnit.SquareMeter, quantity => new Area(quantity.Value * 9.290304e-2, AreaUnit.SquareMeter));
@@ -319,9 +359,12 @@ namespace UnitsNet
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Acre, new CultureInfo("en-US"), false, true, new string[]{"ac"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Acre, new CultureInfo("ru-RU"), false, true, new string[]{"акр"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Acre, new CultureInfo("zh-CN"), false, true, new string[]{"英亩"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.AWG, new CultureInfo("en-US"), false, true, new string[]{"AWG"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.CircularMil, new CultureInfo("en-US"), false, true, new string[]{"cmil"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Hectare, new CultureInfo("en-US"), false, true, new string[]{"ha"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Hectare, new CultureInfo("ru-RU"), false, true, new string[]{"га"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.Hectare, new CultureInfo("zh-CN"), false, true, new string[]{"英亩"});
+            unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.KilocircularMil, new CultureInfo("en-US"), false, true, new string[]{"kcmil"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.SquareCentimeter, new CultureInfo("en-US"), false, true, new string[]{"cm²"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.SquareCentimeter, new CultureInfo("ru-RU"), false, true, new string[]{"см²"});
             unitAbbreviationsCache.PerformAbbreviationMapping(AreaUnit.SquareCentimeter, new CultureInfo("zh-CN"), false, true, new string[]{"平方厘米"});
@@ -390,137 +433,151 @@ namespace UnitsNet
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromAcres(QuantityValue acres)
         {
-            double value = (double) acres;
+            QuantityValue value = (QuantityValue) acres;
             return new Area(value, AreaUnit.Acre);
         }
-
+        /// <summary>
+        ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.AWG"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static Area FromAWG(QuantityValue awg)
+        {
+            QuantityValue value = (QuantityValue) awg;
+            return new Area(value, AreaUnit.AWG);
+        }
+        /// <summary>
+        ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.CircularMil"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static Area FromCircularMils(QuantityValue circularmils)
+        {
+            QuantityValue value = (QuantityValue) circularmils;
+            return new Area(value, AreaUnit.CircularMil);
+        }
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.Hectare"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromHectares(QuantityValue hectares)
         {
-            double value = (double) hectares;
+            QuantityValue value = (QuantityValue) hectares;
             return new Area(value, AreaUnit.Hectare);
         }
-
+        /// <summary>
+        ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.KilocircularMil"/>.
+        /// </summary>
+        /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
+        public static Area FromKilocircularMils(QuantityValue kilocircularmils)
+        {
+            QuantityValue value = (QuantityValue) kilocircularmils;
+            return new Area(value, AreaUnit.KilocircularMil);
+        }
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareCentimeter"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareCentimeters(QuantityValue squarecentimeters)
         {
-            double value = (double) squarecentimeters;
+            QuantityValue value = (QuantityValue) squarecentimeters;
             return new Area(value, AreaUnit.SquareCentimeter);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareDecimeter"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareDecimeters(QuantityValue squaredecimeters)
         {
-            double value = (double) squaredecimeters;
+            QuantityValue value = (QuantityValue) squaredecimeters;
             return new Area(value, AreaUnit.SquareDecimeter);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareFoot"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareFeet(QuantityValue squarefeet)
         {
-            double value = (double) squarefeet;
+            QuantityValue value = (QuantityValue) squarefeet;
             return new Area(value, AreaUnit.SquareFoot);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareInch"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareInches(QuantityValue squareinches)
         {
-            double value = (double) squareinches;
+            QuantityValue value = (QuantityValue) squareinches;
             return new Area(value, AreaUnit.SquareInch);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareKilometer"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareKilometers(QuantityValue squarekilometers)
         {
-            double value = (double) squarekilometers;
+            QuantityValue value = (QuantityValue) squarekilometers;
             return new Area(value, AreaUnit.SquareKilometer);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareMeter"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareMeters(QuantityValue squaremeters)
         {
-            double value = (double) squaremeters;
+            QuantityValue value = (QuantityValue) squaremeters;
             return new Area(value, AreaUnit.SquareMeter);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareMicrometer"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareMicrometers(QuantityValue squaremicrometers)
         {
-            double value = (double) squaremicrometers;
+            QuantityValue value = (QuantityValue) squaremicrometers;
             return new Area(value, AreaUnit.SquareMicrometer);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareMile"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareMiles(QuantityValue squaremiles)
         {
-            double value = (double) squaremiles;
+            QuantityValue value = (QuantityValue) squaremiles;
             return new Area(value, AreaUnit.SquareMile);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareMillimeter"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareMillimeters(QuantityValue squaremillimeters)
         {
-            double value = (double) squaremillimeters;
+            QuantityValue value = (QuantityValue) squaremillimeters;
             return new Area(value, AreaUnit.SquareMillimeter);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareNauticalMile"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareNauticalMiles(QuantityValue squarenauticalmiles)
         {
-            double value = (double) squarenauticalmiles;
+            QuantityValue value = (QuantityValue) squarenauticalmiles;
             return new Area(value, AreaUnit.SquareNauticalMile);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.SquareYard"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromSquareYards(QuantityValue squareyards)
         {
-            double value = (double) squareyards;
+            QuantityValue value = (QuantityValue) squareyards;
             return new Area(value, AreaUnit.SquareYard);
         }
-
         /// <summary>
         ///     Creates a <see cref="Area"/> from <see cref="AreaUnit.UsSurveySquareFoot"/>.
         /// </summary>
         /// <exception cref="ArgumentException">If value is NaN or Infinity.</exception>
         public static Area FromUsSurveySquareFeet(QuantityValue ussurveysquarefeet)
         {
-            double value = (double) ussurveysquarefeet;
+            QuantityValue value = (QuantityValue) ussurveysquarefeet;
             return new Area(value, AreaUnit.UsSurveySquareFoot);
         }
 
@@ -532,7 +589,7 @@ namespace UnitsNet
         /// <returns>Area unit value.</returns>
         public static Area From(QuantityValue value, AreaUnit fromUnit)
         {
-            return new Area((double)value, fromUnit);
+            return new Area((QuantityValue)value, fromUnit);
         }
 
         #endregion
@@ -702,28 +759,65 @@ namespace UnitsNet
         }
 
         /// <summary>Get <see cref="Area"/> from multiplying value and <see cref="Area"/>.</summary>
-        public static Area operator *(double left, Area right)
+        public static Area operator *(QuantityValue left, Area right)
         {
             return new Area(left * right.Value, right.Unit);
         }
 
         /// <summary>Get <see cref="Area"/> from multiplying value and <see cref="Area"/>.</summary>
-        public static Area operator *(Area left, double right)
+        public static Area operator *(Area left, QuantityValue right)
         {
             return new Area(left.Value * right, left.Unit);
         }
 
         /// <summary>Get <see cref="Area"/> from dividing <see cref="Area"/> by value.</summary>
-        public static Area operator /(Area left, double right)
+        public static Area operator /(Area left, QuantityValue right)
         {
             return new Area(left.Value / right, left.Unit);
         }
 
         /// <summary>Get ratio value from dividing <see cref="Area"/> by <see cref="Area"/>.</summary>
-        public static double operator /(Area left, Area right)
+        public static QuantityValue operator /(Area left, Area right)
         {
             return left.SquareMeters / right.SquareMeters;
         }
+
+        /// <summary>Negate the <see cref="Area"/>.</summary>
+        public new Area Negate()
+        {
+            return new Area(-this.Value, this.Unit);
+        }
+
+        /// <summary>Add two <see cref="Area"/> together</summary>
+        public Area Add(Area other)
+        {
+            return new Area(this.Value + other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Subtract one <see cref="Area"/> from another</summary>
+        public Area Subtract(Area other)
+        {
+            return new Area(this.Value - other.GetValueAs(this.Unit), this.Unit);
+        }
+
+        /// <summary>Scale the <see cref="Area"/> by a constant</summary>
+        public new Area Scale(double scaleFactor)
+        {
+            return new Area(scaleFactor * this.Value, this.Unit);
+        }
+
+
+        /// <summary>Negate the <see cref="Area"/>.</summary>
+        IQuantity IArithmetic.Negate() => Negate();
+
+        /// <summary>Add two <see cref="Area"/> together</summary>
+        IQuantity IArithmetic.Add(IQuantity other) => Add((Area)other);
+
+        /// <summary>Subtract one <see cref="Area"/> from another</summary>
+        IQuantity IArithmetic.Subtract(IQuantity other) => Subtract((Area)other);
+
+        /// <summary>Scale the <see cref="Area"/> by a constant</summary>
+        IQuantity IArithmetic.Scale(double scaleFactor) => Scale(scaleFactor);
 
         #endregion
 
@@ -757,7 +851,15 @@ namespace UnitsNet
         /// <remarks>Consider using <see cref="Equals(Area, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
         public static bool operator ==(Area left, Area right)
         {
-            return left.Equals(right);
+            if(left is null ^ right is null)
+            {
+                return false;
+            }
+            else if(left is null && right is null)
+            {
+                return true;
+            }
+            return left!.Equals(right);
         }
 
         /// <summary>Returns true if not exactly equal.</summary>
@@ -768,7 +870,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(object obj)
+        public new int CompareTo(object? obj)
         {
             if (obj is null) throw new ArgumentNullException(nameof(obj));
             if (!(obj is Area objArea)) throw new ArgumentException("Expected type Area.", nameof(obj));
@@ -777,14 +879,18 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        public int CompareTo(Area other)
+        public int CompareTo(Area? other)
         {
-            return _value.CompareTo(other.GetValueAs(this.Unit));
+            if(other is Area otherArea)
+            {
+                return Value.CompareTo(otherArea.GetValueAs(this.Unit));
+            }
+            return 1; //Any value is greater than null
         }
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Area, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null || !(obj is Area objArea))
                 return false;
@@ -794,9 +900,9 @@ namespace UnitsNet
 
         /// <inheritdoc />
         /// <remarks>Consider using <see cref="Equals(Area, double, ComparisonType)"/> for safely comparing floating point values.</remarks>
-        public bool Equals(Area other)
+        public bool Equals(Area? other)
         {
-            return _value.Equals(other.GetValueAs(this.Unit));
+            return Value.Equals(other?.GetValueAs(this.Unit));
         }
 
         /// <summary>
@@ -844,8 +950,8 @@ namespace UnitsNet
             if (tolerance < 0)
                 throw new ArgumentOutOfRangeException("tolerance", "Tolerance must be greater than or equal to 0.");
 
-            double thisValue = (double)this.Value;
-            double otherValueInThisUnits = other.As(this.Unit);
+            QuantityValue thisValue = this.Value;
+            QuantityValue otherValueInThisUnits = other.As(this.Unit);
 
             return UnitsNet.Comparison.Equals(thisValue, otherValueInThisUnits, tolerance, comparisonType);
         }
@@ -867,17 +973,17 @@ namespace UnitsNet
         ///     Convert to the unit representation <paramref name="unit" />.
         /// </summary>
         /// <returns>Value converted to the specified unit.</returns>
-        public double As(AreaUnit unit)
+        public QuantityValue As(AreaUnit unit)
         {
             if (Unit == unit)
-                return Convert.ToDouble(Value);
+                return Value;
 
             var converted = GetValueAs(unit);
-            return Convert.ToDouble(converted);
+            return converted;
         }
 
         /// <inheritdoc cref="IQuantity.As(UnitSystem)"/>
-        public double As(UnitSystem unitSystem)
+        public QuantityValue As(UnitSystem unitSystem)
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -892,7 +998,7 @@ namespace UnitsNet
         }
 
         /// <inheritdoc />
-        double IQuantity.As(Enum unit)
+        QuantityValue IQuantity.As(Enum unit)
         {
             if (!(unit is AreaUnit unitAsAreaUnit))
                 throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(AreaUnit)} is supported.", nameof(unit));
@@ -950,8 +1056,21 @@ namespace UnitsNet
             return ToUnit(unitAsAreaUnit, DefaultConversionFunctions);
         }
 
+        /// <inheritdoc />
+        IQuantity IQuantity.ToUnit(Enum unit, UnitConverter unitConverter)
+        {
+            if (!(unit is AreaUnit unitAsAreaUnit))
+                throw new ArgumentException($"The given unit is of type {unit.GetType()}. Only {typeof(AreaUnit)} is supported.", nameof(unit));
+
+            return ToUnit(unitAsAreaUnit, unitConverter);
+        }
+
         /// <inheritdoc cref="IQuantity.ToUnit(UnitSystem)"/>
-        public Area ToUnit(UnitSystem unitSystem)
+#if NET5_0_OR_GREATER
+        public override Area ToUnit(UnitSystem unitSystem)
+#else
+        public override IQuantity ToUnit(UnitSystem unitSystem)
+#endif
         {
             if (unitSystem is null)
                 throw new ArgumentNullException(nameof(unitSystem));
@@ -972,12 +1091,15 @@ namespace UnitsNet
         IQuantity<AreaUnit> IQuantity<AreaUnit>.ToUnit(AreaUnit unit) => ToUnit(unit);
 
         /// <inheritdoc />
-        IQuantity<AreaUnit> IQuantity<AreaUnit>.ToUnit(UnitSystem unitSystem) => ToUnit(unitSystem);
+        IQuantity<AreaUnit> IQuantity<AreaUnit>.ToUnit(AreaUnit unit, UnitConverter unitConverter) => ToUnit(unit, unitConverter);
 
-        private double GetValueAs(AreaUnit unit)
+        /// <inheritdoc />
+        IQuantity<AreaUnit> IQuantity<AreaUnit>.ToUnit(UnitSystem unitSystem) => (IQuantity<AreaUnit>)ToUnit(unitSystem);
+
+        private QuantityValue GetValueAs(AreaUnit unit)
         {
             var converted = ToUnit(unit);
-            return (double)converted.Value;
+            return (QuantityValue)converted.Value;
         }
 
         #endregion
@@ -998,43 +1120,9 @@ namespace UnitsNet
         /// </summary>
         /// <returns>String representation.</returns>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        public string ToString(IFormatProvider? provider)
+        public override string ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="significantDigitsAfterRadix">The number of significant digits after the radix point.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete(@"This method is deprecated and will be removed at a future release. Please use ToString(""s2"") or ToString(""s2"", provider) where 2 is an example of the number passed to significantDigitsAfterRadix.")]
-        public string ToString(IFormatProvider? provider, int significantDigitsAfterRadix)
-        {
-            var value = Convert.ToDouble(Value);
-            var format = UnitFormatter.GetFormat(value, significantDigitsAfterRadix);
-            return ToString(provider, format);
-        }
-
-        /// <summary>
-        ///     Get string representation of value and unit.
-        /// </summary>
-        /// <param name="format">String format to use. Default:  "{0:0.##} {1} for value and unit abbreviation respectively."</param>
-        /// <param name="args">Arguments for string format. Value and unit are implicitly included as arguments 0 and 1.</param>
-        /// <returns>String representation.</returns>
-        /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
-        [Obsolete("This method is deprecated and will be removed at a future release. Please use string.Format().")]
-        public string ToString(IFormatProvider? provider, [NotNull] string format, [NotNull] params object[] args)
-        {
-            if (format == null) throw new ArgumentNullException(nameof(format));
-            if (args == null) throw new ArgumentNullException(nameof(args));
-
-            provider = provider ?? CultureInfo.CurrentUICulture;
-
-            var value = Convert.ToDouble(Value);
-            var formatArgs = UnitFormatter.GetFormatArgs(Unit, value, provider, args);
-            return string.Format(provider, format, formatArgs);
         }
 
         /// <inheritdoc cref="QuantityFormatter.Format{TUnitType}(IQuantity{TUnitType}, string, IFormatProvider)"/>
@@ -1055,7 +1143,7 @@ namespace UnitsNet
         /// <param name="format">The format string.</param>
         /// <param name="provider">Format to use for localization and number formatting. Defaults to <see cref="CultureInfo.CurrentUICulture" /> if null.</param>
         /// <returns>The string representation.</returns>
-        public string ToString(string format, IFormatProvider? provider)
+        public override string ToString(string? format, IFormatProvider? provider)
         {
             return QuantityFormatter.Format<AreaUnit>(this, format, provider);
         }
@@ -1069,95 +1157,93 @@ namespace UnitsNet
             return TypeCode.Object;
         }
 
-        bool IConvertible.ToBoolean(IFormatProvider provider)
+        bool IConvertible.ToBoolean(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Area)} to bool is not supported.");
         }
 
-        byte IConvertible.ToByte(IFormatProvider provider)
+        byte IConvertible.ToByte(IFormatProvider? provider)
         {
-            return Convert.ToByte(_value);
+            return Convert.ToByte(Value);
         }
 
-        char IConvertible.ToChar(IFormatProvider provider)
+        char IConvertible.ToChar(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Area)} to char is not supported.");
         }
 
-        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        DateTime IConvertible.ToDateTime(IFormatProvider? provider)
         {
             throw new InvalidCastException($"Converting {typeof(Area)} to DateTime is not supported.");
         }
 
-        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        decimal IConvertible.ToDecimal(IFormatProvider? provider)
         {
-            return Convert.ToDecimal(_value);
+            return Convert.ToDecimal(Value);
         }
 
-        double IConvertible.ToDouble(IFormatProvider provider)
+        double IConvertible.ToDouble(IFormatProvider? provider)
         {
-            return Convert.ToDouble(_value);
+            return Convert.ToDouble(Value);
         }
 
-        short IConvertible.ToInt16(IFormatProvider provider)
+        short IConvertible.ToInt16(IFormatProvider? provider)
         {
-            return Convert.ToInt16(_value);
+            return Convert.ToInt16(Value);
         }
 
-        int IConvertible.ToInt32(IFormatProvider provider)
+        int IConvertible.ToInt32(IFormatProvider? provider)
         {
-            return Convert.ToInt32(_value);
+            return Convert.ToInt32(Value);
         }
 
-        long IConvertible.ToInt64(IFormatProvider provider)
+        long IConvertible.ToInt64(IFormatProvider? provider)
         {
-            return Convert.ToInt64(_value);
+            return Convert.ToInt64(Value);
         }
 
-        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        sbyte IConvertible.ToSByte(IFormatProvider? provider)
         {
-            return Convert.ToSByte(_value);
+            return Convert.ToSByte(Value);
         }
 
-        float IConvertible.ToSingle(IFormatProvider provider)
+        float IConvertible.ToSingle(IFormatProvider? provider)
         {
-            return Convert.ToSingle(_value);
+            return Convert.ToSingle(Value);
         }
 
-        string IConvertible.ToString(IFormatProvider provider)
+        string IConvertible.ToString(IFormatProvider? provider)
         {
             return ToString("g", provider);
         }
 
-        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        object IConvertible.ToType(Type conversionType, IFormatProvider? provider)
         {
             if (conversionType == typeof(Area))
                 return this;
             else if (conversionType == typeof(AreaUnit))
                 return Unit;
-            else if (conversionType == typeof(QuantityType))
-                return Area.QuantityType;
             else if (conversionType == typeof(QuantityInfo))
                 return Area.Info;
-            else if (conversionType == typeof(BaseDimensions))
+            else if (conversionType == typeof(Dimensions))
                 return Area.BaseDimensions;
             else
                 throw new InvalidCastException($"Converting {typeof(Area)} to {conversionType} is not supported.");
         }
 
-        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        ushort IConvertible.ToUInt16(IFormatProvider? provider)
         {
-            return Convert.ToUInt16(_value);
+            return Convert.ToUInt16(Value);
         }
 
-        uint IConvertible.ToUInt32(IFormatProvider provider)
+        uint IConvertible.ToUInt32(IFormatProvider? provider)
         {
-            return Convert.ToUInt32(_value);
+            return Convert.ToUInt32(Value);
         }
 
-        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        ulong IConvertible.ToUInt64(IFormatProvider? provider)
         {
-            return Convert.ToUInt64(_value);
+            return Convert.ToUInt64(Value);
         }
 
         #endregion
